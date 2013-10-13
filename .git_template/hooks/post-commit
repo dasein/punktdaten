@@ -1,0 +1,2 @@
+#!/bin/sh
+$HOME/bin/gentags >/dev/null 2>&1 &

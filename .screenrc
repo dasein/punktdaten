@@ -1,0 +1,31 @@
+#defutf8              on
+encoding              utf-8
+term                  xterm-color
+escape 		      "^Tt"
+nethack               on
+autodetach            on
+hardcopy_append       on
+vbell                 off
+startup_message       off
+silencewait           15
+termcapinfo           xterm* ti@:te@
+bindkey               -k kP copy
+sorendition           rw
+shell                 -$SHELL
+hardstatus            alwayslastline "%?%{wk}%-Lw%?%{yK}%n*%f %t%?(%u)%?%?%{wk}%+Lw%? %{gk}%=%c %{yk}%d/%M/%Y"
+#hardstatus            alwayslastline "%{.w} %c | %d.%m.%Y |  %{g} %w " #%{= dd}  "
+pow_detach_msg        "BYE"
+activity              "Master! Trouble in %n (%t) [%w:%s]~"
+bell_msg              "Master, Troubel in %n!"
+vbell_msg             "   Wuff  ----  Wuff!!  "
+#defbce                on
+#term                  screen-bce
+
+# Window numbering starts at 1, not 0.
+bind c screen 1
+bind 0 select 10
+screen -t EDIT	1
+screen -t NEW	2
+screen -t NEW	3
+screen -t NEW	4
+screen -t NEW	5

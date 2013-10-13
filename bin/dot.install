@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# Links up files and dirs in my dotfiles repo to $HOME
+# Clobbers links, nothing else.
+
+cd $(dirname $0)/..
+dotdir=$(pwd)
+dotfiles=$(find . -mindepth 1 -maxdepth 1 -name .git -prune -o -exec basename {} \;)
+
+for dot in $dotfiles; do
+    if [ ! -e "$HOME/$dot" ] || [ -h "$HOME/$dot" ]; then
+        ln -fs "$dotdir/$dot" $HOME
+        echo "Linked: $HOME/$dot"
+    else
+        echo "ERROR: $HOME/$dot is real and exists"
+    fi
+done
