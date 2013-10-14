@@ -1,2 +1,3 @@
 #!/bin/sh
-$HOME/bin/gentags >/dev/null 2>&1 &
+# This hook is invoked by git merge, which happens when a git pull is done on a local repository.
+exit 0
