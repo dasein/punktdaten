@@ -4,6 +4,9 @@
 # Clobbers links, nothing else.
 
 cd $(dirname $0)/..
+
+git submodule update --init
+
 dotdir=$(pwd)
 dotfiles=$(find . -mindepth 1 -maxdepth 1 -name .git -prune -o -exec basename {} \;)
 
