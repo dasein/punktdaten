@@ -55,6 +55,10 @@
 ;; Line-wrapping
 (set-default 'fill-column 75)
 
+;; No tabs
+(setq-default indent-tabs-mode nil)
+(setq tab-width 4)
+
 ;; Turn on line and column numbers
 (setq line-number-mode t)
 (setq column-number-mode t)
@@ -193,11 +197,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'python-mode)
 (add-hook 'python-mode-hook
-            (lambda ()
+          (lambda ()
 	      (require 'python-pep8)
 	      (require 'python-pylint)
 	      (require 'virtualenv)
-	      (setq py-shell-name "ipython")
-	      (setq py-python-command "ipython")
-	      (setq py-indent-offset 4)
-	      (setq py-smart-indentation nil)))
+	      (progn
+                (setq py-shell-name "ipython")
+                (setq py-python-command "ipython")
+                (setq py-indent-offset 4)
+                (set-variable 'indent-tabs-mode nil)
+                (setq py-smart-indentation nil))))
