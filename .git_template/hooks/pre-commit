@@ -1,11 +1,11 @@
 #!/bin/sh
-git config user.name > /dev/null && git config user.mail > /dev/null
+git config user.name > /dev/null && git config user.email > /dev/null
 RETVAL=$?
 if [ $RETVAL -ne 0 ]; then
     echo "Please set your user NAME and EMAIL for this repo"
     echo "Ex."
     echo "    git config --local user.name <NAME>"
-    echo "    git config --local user.mail <EMAIL>"
+    echo "    git config --local user.email <EMAIL>"
     exit 1
 fi
 
