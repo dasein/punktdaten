@@ -1,26 +1,55 @@
 #!/bin/sh
-git config user.name > /dev/null && git config user.email > /dev/null
-RETVAL=$?
-if [ $RETVAL -ne 0 ]; then
-    echo "Please set your user NAME and EMAIL for this repo"
-    echo "Ex."
-    echo "    git config --local user.name <NAME>"
-    echo "    git config --local user.email <EMAIL>"
-    exit 1
-fi
 
-if [ "$(git config branch.autosetuprebase)" != "always" ]; then
-    echo "Please set autosetuprebase"
-    echo "Ex."
-    echo "    git config branch.autosetuprebase always"
-    exit 1
-fi
+config_exists() {
+    git config $1 > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "[pre-commit hook] Please set $1 with:"
+        # Preference is to set configs on a per repo basis, hence --local
+        echo "    git config --local $1 'VALUE'"
+        exit 1
+    fi
+}
 
-if [ "$(git config push.default)" != "tracking" ]; then
-    echo "Please set up your push default"
-    echo "Ex."
-    echo "    git config push.default tracking"
-    exit 1
-fi
+config_equals() {
+    if [ "$(git config $1)" != "$2" ]; then
+        echo "[pre-commit hook] Please set $1 with:"
+        echo "    git config $1 $2"
+        exit 1
+    fi
+}
+
+set_user_email() {
+    # Sets user.email for a repo using [email-aliases] defined in .gitconfig
+    git config user.email > /dev/null
+    if [ $? -ne 0 ]; then
+        aliases=$(git config -l | sed -n 's/^email-aliases\.\(.*=.*\)/\t\1/p')
+        choices=$(git config -l | sed -n 's/^email-aliases\.\(.*\)=.*/\1,/p' | tr -d '\n')
+        exec < /dev/tty
+        echo "[pre-commit hook] Please select user.email to be used for commits against this repo"
+        echo "$aliases"
+        read -p  "["$choices"-]? " choice
+        exec <&-
+
+        email=$(git config email-aliases.$choice)
+        if [ $? -ne 0 ]; then
+            echo "Invalid alias selected"
+            exit 1
+        else
+            echo "Setting repository user.email to <$email>"
+            git config user.email $email
+            echo "Please resubmit your commit for changes to take affect"
+            exit 1
+        fi
+    fi
+}
+
+set_user_email
+
+# Extra checks for the un-initiated.
+# Uncomment when publishing for system wide config checks
+#
+# config_exists user.email
+# config_equals push.default tracking
+# config_equals branch.autosetuprebase always
 
 exit 0

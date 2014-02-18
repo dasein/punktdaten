@@ -1,3 +1,12 @@
+[user]
+        name = "Herbert Pfennig"
+        #email is set on a per repo basis using [email-aliases] section
+
+[email-aliases]
+        # Used by the set_user_email() pre-commit hook
+        w = hpfennig@silvertailsystems.com
+        p = dasein555@gmail.com
+
 [branch]
         autosetuprebase = always
         autosetupmerge = false
