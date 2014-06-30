@@ -23,6 +23,8 @@
         br = branch
         co = checkout
         df = diff
+        ll = log --graph --pretty=oneline --abbrev-commit --decorate
+        lla = log --graph --pretty=oneline --abbrev-commit --decorate --all
         lg = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short
         lgm = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %C(bold blue)(%cn %cr)' --date=short --merges
         fixup = !sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -
