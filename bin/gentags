@@ -1,18 +1,18 @@
 #!/bin/sh
 set -e
 
-if pidof cscope ctags >/dev/null; then
+if pgrep cscope ctags >/dev/null; then
     echo "gentags already running"
 else
     echo "Generating ctags output..."
     # --extra=+q --c++-kinds=+p --fields=+iaS \
-    ctags -eRf tags.$$ --sort=yes --links=no --totals=yes \
+    ctags -eRf TAGS.$$ --sort=yes --links=no --totals=yes \
         --extra=+fq --exclude=*.js --exclude=.git .
-    mv tags.$$ tags
+    mv TAGS.$$ TAGS
 
     echo "Generating cscope output..."
     find . -type f -name "*.py" -o -name "*.php" -o -name "*.[ch]" \
         -o -name "*.[ch]pp" -o -name "*.java" \
-        -o -name "*.make" -o -name "*.spec" > cscope.files
+        -o -name "*.make" -o -name "*.spec" -o -name "*.mk" > cscope.files
     cscope -bq
 fi
