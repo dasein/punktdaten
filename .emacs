@@ -3,10 +3,42 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun custom-autoload (&rest args))
 ;; Define the load-path
-(setq load-path (cons "~/.emacs.d/" load-path))
 (let ((default-directory "~/.emacs.d/lisp/"))
       (normal-top-level-add-to-load-path '("."))
       (normal-top-level-add-subdirs-to-load-path))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                             Packages
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'package)
+(require 'cl)
+(add-to-list 'package-archives
+             '("melpa-stable" . "http://melpa-stable.milkbox.net/packages/") t)
+
+(package-initialize)
+
+(defvar preinstall-packages
+  '(ack-and-a-half helm
+                   xcscope
+                   zenburn-theme)
+  "A list of packages to ensure are installed at launch.")
+
+(defun preinstall-packages-installed-p ()
+  (loop for p in preinstall-packages
+	when (not (package-installed-p p)) do (return nil)
+	finally (return t)))
+
+(unless (preinstall-packages-installed-p)
+  ;; check for new packages (package versions)
+  (message "%s" "Emacs is now refreshing its package database...")
+  (package-refresh-contents)
+  (message "%s" " done.")
+  ;; install the missing packages
+  (dolist (p preinstall-packages)
+    (when (not (package-installed-p p))
+      (package-install p))))
+
+(provide 'preinstall-packages)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Some Basics
@@ -86,9 +118,8 @@
 (load "server")
 (unless (server-running-p) (server-start))
 
-;; ido mode
-(require 'ido)
-(ido-mode t)
+;; helm mode
+(helm-mode t)
 
 ;; Highlight changes
 (global-highlight-changes-mode t)
@@ -103,51 +134,7 @@
 (set-background-color "black")
 
 ;; load my theme
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (load-theme 'zenburn t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Ibuffer Mode
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'ibuffer)
-(require 'ibuffer-vc)
-(global-set-key (kbd "C-x C-b") 'ibuffer)
-
-;; Use human readable Size column instead of original one
-(define-ibuffer-column size-h
-  (:name "Size" :inline t)
-  (cond
-   ((> (buffer-size) 1000) (format "%7.3fk" (/ (buffer-size) 1000.0)))
-   ((> (buffer-size) 1000000) (format "%7.3fM" (/ (buffer-size) 1000000.0)))
-   (t (format "%8d" (buffer-size)))))
-
-;; Modify the default ibuffer-formats
-  (setq ibuffer-formats
-        '((mark modified read-only " "
-                (name 18 18 :left :elide)
-                " "
-                (size-h 9 -1 :right)
-                " "
-                (mode 16 16 :left :elide)
-                " "
-                filename-and-process)))
-
-(setq ibuffer-saved-filter-groups
-      '(("home"
-         ;; Home Base
-         ("MAIN3" (filename . "work/core.main3"))
-         ("TOOLS" (filename . "work/tools"))
-         ("THIRDPARTY" (filename . "work/thirdparty"))
-         ("BUILDBOT" (filename . "work/buildbot"))
-         ("WORK" (filename . "work/"))
-         ("Help" (or (name . "\*Help\*")
-                     (name . "\*Apropos\*")
-                     (name . "\*info\*"))))))
-
-(add-hook 'ibuffer-hook
-     (lambda ()
-       (ibuffer-auto-mode 1)
-       (ibuffer-switch-to-saved-filter-groups "home")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mutt
@@ -195,9 +182,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'python-mode)
 (add-hook 'python-mode-hook
-          (lambda ()
+           (lambda ()
 	      (require 'python-pep8)
 	      (require 'python-pylint)
 	      (require 'virtualenv)
