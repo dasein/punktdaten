@@ -54,7 +54,7 @@ def filter_repo(repo, files, prune_empty=False):
     run_shell_cmd('git clone %s %s' % (repo, orig_repo))
 
     # We want to cleanup branches
-    run_shell_cmd('git branch -r | grep -v master | xargs -L1 git checkout',
+    run_shell_cmd('git branch -r | grep -v master | xargs -L1 git checkout -t',
                   orig_repo)
 
     # Create a new repo to do our cleanup in
