@@ -1,0 +1,13 @@
+; cutoff for word wrap
+(setq-default fill-column 69)
+
+; avoid garbage collection
+(setq-default gc-cons-threshold 4000000)
+
+(custom-set-variables
+        '(sentence-end-double-space nil)
+        '(truncate-partial-width-windows nil)
+        '(line-number-mode t)
+        '(column-number-mode t)
+        '(query-user-mail-address nil)
+        '(visible-bell t))

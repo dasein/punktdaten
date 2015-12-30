@@ -4,7 +4,7 @@
 
 [email-aliases]
         # Used by the set_user_email() pre-commit hook
-        w = hpfennig@silvertailsystems.com
+        w = herb@brkt.com
         p = dasein555@gmail.com
 
 [branch]
@@ -28,6 +28,7 @@
         lg = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short
         lgm = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short --merges
         fixup = !sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -
+	root = !pwd
 
 [color]
         branch = auto
@@ -54,6 +55,7 @@
         ui = true
 
 [core]
+        editor = emacs -nw --no-init-file --no-site-file --load ~/.emacs.git
         whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
         excludesfile = ~/.gitignore_global
 
