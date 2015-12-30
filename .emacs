@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                             Libraries
+;;                             Custom Libraries
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun custom-autoload (&rest args))
 ;; Define the load-path
@@ -12,16 +12,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'package)
 (require 'cl)
+
+(setq package-user-dir "~/.emacs.d/packages")
+
 (add-to-list 'package-archives
              '("melpa-stable" . "http://melpa-stable.milkbox.net/packages/") t)
+(add-to-list 'package-archives
+             '("marmalade" . "http://marmalade-repo.org/packages/") t)
 
 (package-initialize)
 
 (defvar preinstall-packages
-  '(ack-and-a-half helm
-                   xcscope
-                   zenburn-theme)
-  "A list of packages to ensure are installed at launch.")
+  '(
+    python-pep8
+    python-pylint
+    python-mode
+    jedi
+    helm
+    xcscope
+    virtualenv
+    zenburn-theme)
+    "A list of packages to ensure are installed at launch.")
 
 (defun preinstall-packages-installed-p ()
   (loop for p in preinstall-packages
@@ -167,10 +178,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'helm)
 (require 'helm-config)
-(require 'helm-command)
 
+(if (eq system-type 'darwin) (setq helm-locate-fuzzy-match nil))
+(setq helm-locate-command
+      (case system-type
+        ('gnu/linux "locate -i -r %s")
+        ('berkeley-unix "locate -i %s")
+        ('windows-nt "es %s")
+        ('darwin "mdfind -onlyin ~ %s %s")
+        (t "locate %s")))
+
+(global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key (kbd "C-x b") 'helm-mini)
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
 (global-set-key (kbd "C-c h") 'helm-command-prefix)
 (global-unset-key (kbd "C-x c"))
 
