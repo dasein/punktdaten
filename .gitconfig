@@ -1,6 +1,7 @@
 [user]
-        name = "Herbert Pfennig"
         #email is set on a per repo basis using [email-aliases] section
+        name = "Herbert Pfennig"
+        useConfigOnly = true
 
 [email-aliases]
         # Used by the set_user_email() pre-commit hook
@@ -27,6 +28,7 @@
         lla = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr) %C(bold blue)<%cn>' --abbrev-commit --decorate --date=short --all
         lg = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short
         lgm = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short --merges
+        merged = !sh -c \"git branch -r --merged $1/master | grep -v master | grep $1 | cut -d/ -f2-\"
         fixup = !sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -
 	root = !pwd
 
