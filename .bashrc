@@ -112,7 +112,7 @@ trap cleanup EXIT
 function bld()
 {
     if [ -z $CORES ]; then
-        cores=$(grep ^processor /proc/cpuinfo | wc -l)
+        cores=$(python -c "import multiprocessing; print multiprocessing.cpu_count()")
     else
         cores=$CORES
     fi
@@ -159,6 +159,24 @@ function gpg_load()
 function gpg_dump()
 {
     gpg -o - $@
+}
+
+function cs()
+{
+    cat $@ | cowsay -W80 -e @@ -T PP
+}
+
+function mup()
+{
+    minikube start --vm-driver vmwarefusion --cpus 4 --memory 4096 --disk-size 50g
+    eval "$(minikube docker-env)"
+    if grep "$(minikube ip)" /etc/hosts; then
+        echo "Minikube ip is defined in /etc/hosts"
+    else
+        echo "Updating dev.local entry in /etc/hosts (may need sudo)"
+        sudo sed -i.bak "/dev.local/d" /etc/hosts
+        sudo sh -c 'echo "$(minikube ip)    dev.local" >> /etc/hosts'
+    fi
 }
 
 # Bash extras
