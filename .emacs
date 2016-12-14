@@ -156,8 +156,7 @@
 ;; load my theme
 (defvar zenburn-override-colors-alist
   '(("zenburn-bg" . "#505050")
-    ))
-
+    ("zenburn-fg" . "#DCDCCC")))
 (load-theme 'zenburn t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
