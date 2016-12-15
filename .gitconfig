@@ -1,7 +1,7 @@
 [user]
         #email is set on a per repo basis using [email-aliases] section
         name = "Herbert Pfennig"
-        useConfigOnly = true
+        email= "h@none"
 
 [email-aliases]
         # Used by the set_user_email() pre-commit hook

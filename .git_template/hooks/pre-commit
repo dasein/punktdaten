@@ -20,8 +20,7 @@ config_equals() {
 
 set_user_email() {
     # Sets user.email for a repo using [email-aliases] defined in .gitconfig
-    git config user.email > /dev/null
-    if [ $? -ne 0 ]; then
+    if [ "$(git config user.email)" = "h@none" ]; then
         aliases=$(git config -l | sed -n 's/^email-aliases\.\(.*=.*\)/\t\1/p')
         choices=$(git config -l | sed -n 's/^email-aliases\.\(.*\)=.*/\1,/p' | tr -d '\n')
         exec < /dev/tty
