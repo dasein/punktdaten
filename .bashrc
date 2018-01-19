@@ -168,15 +168,35 @@ function cs()
 
 function mup()
 {
-    minikube start --vm-driver vmwarefusion --cpus 4 --memory 4096 --disk-size 50g
-    eval "$(minikube docker-env)"
+   if [ -z "$@" ]
+     then
+       echo "Provide vm-driver as argument. (e.g mup virtualbox)"; return
+   fi
+    minikube start --vm-driver $@ --cpus 4 --memory 4096 --disk-size 50g --kubernetes-version=v1.6.4;
+    kubectl config use-context dev;
+    eval "$(minikube docker-env)";
     if grep "$(minikube ip)" /etc/hosts; then
-        echo "Minikube ip is defined in /etc/hosts"
+        echo "Minikube ip is defined in /etc/hosts";
     else
-        echo "Updating dev.local entry in /etc/hosts (may need sudo)"
-        sudo sed -i.bak "/dev.local/d" /etc/hosts
-        sudo sh -c 'echo "$(minikube ip)    dev.local" >> /etc/hosts'
+        echo "Updating dev.local entry in /etc/hosts (may need sudo)";
+        sudo sed -i.bak "/dev.local/d" /etc/hosts;
+        sudo sh -c 'echo "$(minikube ip)    dev.local api.dev.brkt.net ui.dev.brkt.net rpc.dev.brkt.net" >> /etc/hosts';
     fi
+}
+
+function mupv()
+{
+    mup virtualbox
+}
+
+function mupf()
+{
+    mup virtualbox
+}
+
+function mupx()
+{
+    mup xhyve
 }
 
 # Bash extras
