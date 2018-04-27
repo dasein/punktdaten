@@ -199,11 +199,11 @@
 (if (eq system-type 'darwin) (setq helm-locate-fuzzy-match nil))
 (setq helm-locate-command
       (case system-type
-        ('gnu/linux "locate -i -r %s")
-        ('berkeley-unix "locate -i %s")
+        ('gnu/linux "locate %s -e -A --regex %s")
+        ('berkeley-unix "locate %s -e -A --regex %s")
         ('windows-nt "es %s")
         ('darwin "mdfind -onlyin ~ %s %s")
-        (t "locate %s")))
+        (t "locate %s -e -A --regex %s")))
 
 (global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key (kbd "C-x b") 'helm-mini)
