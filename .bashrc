@@ -96,17 +96,15 @@ alias la="ls -a"
 alias lf="ls -FA"
 alias ll="ls -lA"
 
+if [ -S "$SSH_AUTH_SOCK" ] && [ ! -h "$SSH_AUTH_SOCK" ]; then
+    ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock
+fi
+export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
+
 # SSH Builder
 ssh-herb() { ssh -A herb@$@; }
 ssh-ubuntu() { ssh -A ubuntu@$@; }
 ssh-ec2user() { ssh -A ec2-user@$@; }
-
-# Start SSH agent
-eval $(ssh-agent)
-function cleanup {
-    kill -9 $SSH_AGENT_PID
-}
-trap cleanup EXIT
 
 # Useful functions
 function bld()
