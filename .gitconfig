@@ -19,6 +19,7 @@
 	templatedir = ~/.git_template
 
 [alias]
+        s = status -sb
         st = status
         ci = commit
         br = branch
@@ -31,7 +32,7 @@
         merged = !sh -c \"git branch -r --merged $1/master | grep -v master | grep $1 | cut -d/ -f2-\"
         fixup = !sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -
 	root = !pwd
-	please = push --force-with-lease
+	pp = push --force-with-lease
 	stsh = stash --keep-index
 	staash = stash --include-untracked
 	staaash = stash --all
