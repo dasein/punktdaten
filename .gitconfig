@@ -1,11 +1,11 @@
 [user]
         #email is set on a per repo basis using [email-aliases] section
         name = "Herbert Pfennig"
-        email= "h@none"
+        email = "h@none"
 
 [email-aliases]
         # Used by the set_user_email() pre-commit hook
-        w = herb@brkt.com
+        w = hpfennig@vmware.com
         p = dasein555@gmail.com
 
 [branch]
@@ -25,17 +25,19 @@
         br = branch
         co = checkout
         df = diff
-        ll = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr) %C(bold blue)<%cn>' --abbrev-commit --decorate --date=short
-        lla = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr) %C(bold blue)<%cn>' --abbrev-commit --decorate --date=short --all
+        cl = log --date=short --no-merges --pretty='%C(red)%ad %C(yellow)%h %Creset%s %Cred[%-(trailers:unfold,only)%-]%C(bold blue)<%cn>'
+        ll = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr)' --abbrev-commit --decorate --date=short
+        lla = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr)' --abbrev-commit --decorate --date=short --all
         lg = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short
         lgm = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short --merges
         merged = !sh -c \"git branch -r --merged $1/master | grep -v master | grep $1 | cut -d/ -f2-\"
         fixup = !sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -
-	root = !pwd
-	pp = push --force-with-lease
-	stsh = stash --keep-index
-	staash = stash --include-untracked
-	staaash = stash --all
+        root = !pwd
+        pp = push --force-with-lease
+        stsh = stash --keep-index
+        staash = stash --include-untracked
+        staaash = stash --all
+        save = !git branch -f `git rev-parse --abbrev-ref HEAD`-save-`date +%Y-%m-%d` HEAD
 	aliases = !git config --get-regexp 'alias.*' | colrm 1 6 | sed 's/[ ]/ = /' | sort
 
 [color]
@@ -73,14 +75,34 @@
 [diff "tcpdump"]
         textconv = tcpdump -qns 0 -X -r
 
+[merge]
+        conflictstyle = diff3
+
 [mergetool "ediff"]
         cmd = emacs -nw --eval \" \
-(progn \
-  (setq ediff-quit-hook 'kill-emacs) \
-  (if (file-readable-p \\\"$BASE\\\") \
-      (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\" \
-                                       \\\"$BASE\\\" nil \\\"$MERGED\\\") \
-      (ediff-merge-files \\\"$LOCAL\\\" \\\"$REMOTE\\\" nil \\\"$MERGED\\\")))\"
+(progn\
+  (defun ediff-write-merge-buffer ()\
+    (let ((file ediff-merge-store-file))\
+      (set-buffer ediff-buffer-C)\
+      (write-region (point-min) (point-max) file)\
+      (message \\\"Merge buffer saved in: %s\\\" file)\
+      (set-buffer-modified-p nil)\
+      (sit-for 1)))\
+  (defun ediff-copy-both-to-C ()\
+    (interactive)\
+    (ediff-copy-diff ediff-current-difference nil 'C nil\
+                     (concat\
+                     (ediff-get-region-contents ediff-current-difference 'A ediff-control-buffer)\
+                     (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))\
+  (defun add-d-to-ediff-mode-map () (define-key ediff-mode-map \"d\" 'ediff-copy-both-to-C))\
+  (add-hook 'ediff-keymap-setup-hook 'add-d-to-ediff-mode-map)\
+  (setq ediff-quit-hook 'kill-emacs\
+        ediff-quit-merge-hook 'ediff-write-merge-buffer)\
+  (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\"\
+                                   \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
 
 [merge]
         tool = ediff
+
+[rerere]
+	enabled = 1
