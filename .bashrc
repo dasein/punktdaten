@@ -26,6 +26,10 @@ function buildenv
 }
 buildenv
 
+# Docker env
+export BUILDKIT_INLINE_CACHE=1
+export DOCKER_BUILDKIT=1
+
 # GO dev
 export GOPATH=$HOME/work/go
 
