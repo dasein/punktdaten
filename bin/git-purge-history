@@ -25,13 +25,15 @@ class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter,
 ARGS = argparse.ArgumentParser(description=__doc__,
                                formatter_class=CustomFormatter)
 ARGS.add_argument('-f', '--files', dest='files',
-                  type=argparse.FileType('r'), default='-',
+                  default='', type=str,
                   help='List of files to call git rm -rf on')
 ARGS.add_argument('repository', metavar='<repo>', type=str,
                   help='Location of repository to filter')
 ARGS.add_argument('-p', '--prune-empty', dest='prune_empty',
                   action='store_true',
                   help='Prune empty commits when running index filter')
+ARGS.add_argument('--script', dest='script', type=str,
+                  help='Script to run for tree-filter')
 
 
 def run_shell_cmd(cmd, repodir=None):
@@ -44,13 +46,27 @@ def run_shell_cmd(cmd, repodir=None):
         sys.exit(1)
 
 
-def filter_repo(repo, files, prune_empty=False):
+def filter_repo(repo, files, script, prune_empty=False):
     """Run git filter-branch on a git repo"""
     repo_name = repo.split('/')[-1]
 
     new_repo = repo_name + '.new'
     orig_repo = repo_name + '.orig'
 
+
+    if files:
+        if files.isatty():
+            print 'Please enter file(s) or dir(s) to remove followed by Ctrl-D'
+
+       # Create list of files to purge from file or stdin
+        purge_list = ' '.join([f.strip() for f in files.readlines()])
+        index_filter = 'git rm -qr --cached --ignore-unmatch %s' %  purge_list
+        filter_cmd = 'git filter-branch -f --index-filter "%s"' % index_filter
+    elif script:
+        filter_cmd = 'git filter-branch -f --tree-filter "%s"' % script
+    else:
+        pass
+    # Fetch a copy of the current repo
     run_shell_cmd('git clone %s %s' % (repo, orig_repo))
 
     # We want to cleanup branches
@@ -60,18 +76,12 @@ def filter_repo(repo, files, prune_empty=False):
     # Create a new repo to do our cleanup in
     run_shell_cmd('git clone --bare %s %s' % (orig_repo, new_repo))
 
-    if files.isatty():
-        print 'Please enter file(s) or dir(s) to remove followed by Ctrl-D'
 
-    # Create list of files to purge from file or stdin
-    purge_list = ' '.join([f.strip() for f in files.readlines()])
-    index_filter = 'git rm -qr --cached --ignore-unmatch %s' %  purge_list
-
-    filter_cmd = 'git filter-branch -f --index-filter "%s"' % index_filter
     if prune_empty:
         filter_cmd += ' --prune-empty'
     filter_cmd += ' --tag-name-filter cat -- --all'
 
+    print "Running: %s" % filter_cmd
     run_shell_cmd(filter_cmd, new_repo)
     run_shell_cmd('rm -rf refs/original && git gc --prune=now', new_repo)
     run_shell_cmd('git fsck --cache --unreachable', new_repo)
@@ -85,7 +95,11 @@ def main():
     """Do it"""
     args = ARGS.parse_args()
     start_time = time()
-    filter_repo(args.repository.rstrip('/'), args.files, args.prune_empty)
+    if args.script and args.files:
+        print 'Specify either -f or --script'
+        sys.exit(1)
+    filter_repo(args.repository.rstrip('/'), args.files,
+                args.script, args.prune_empty)
     print 'Script took %.2f seconds to run' % (time()-start_time)
 
 
