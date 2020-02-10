@@ -25,13 +25,17 @@
 (defvar preinstall-packages
   '(
     auto-complete
+    counsel
     go-autocomplete
     go-mode
     go-eldoc
     jedi
+    ivy
     helm
+    magit
     python-pep8
     python-pylint
+    swiper
     virtualenv
     xcscope
     yasnippet
@@ -64,6 +68,10 @@
 ;; under X, instead of the default, backspace behavior.
 (global-set-key [delete] 'delete-char)
 (global-set-key [kp-delete] 'delete-char)
+
+;; Remap forward and backward word
+(global-set-key (kbd "C-b") 'backward-word)
+(global-set-key (kbd "C-f") 'forward-word)
 
 ;; Turn on font-lock mode for Emacs
 (global-font-lock-mode t)
@@ -191,39 +199,59 @@
 (setq org-log-done t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Ivy mode
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'ivy)
+(ivy-mode 1)
+
+(setq ivy-use-virtual-buffers t)
+(setq ivy-count-format "(%d/%d) ")
+(setq ivy-re-builders-alist
+      '((swiper . ivy--regex-plus)
+        (t      . ivy--regex-ignore-order)))
+
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
+(global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+(global-set-key (kbd "C-c g") 'counsel-git)
+(global-set-key (kbd "C-c j") 'counsel-git-grep)
+(global-set-key (kbd "C-x l") 'counsel-locate)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'helm)
-(require 'helm-config)
 
-(if (eq system-type 'darwin) (setq helm-locate-fuzzy-match nil))
-(setq helm-locate-command
-      (case system-type
-        ('gnu/linux "locate %s -e -A --regex %s")
-        ('berkeley-unix "locate %s -e -A --regex %s")
-        ('windows-nt "es %s")
-        ('darwin "mdfind -onlyin ~ %s %s")
-        (t "locate %s -e -A --regex %s")))
+;; (require 'helm)
+;; (require 'helm-config)
 
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x b") 'helm-mini)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "C-c h") 'helm-command-prefix)
-(global-unset-key (kbd "C-x c"))
+;; (if (eq system-type 'darwin) (setq helm-locate-fuzzy-match nil))
+;; (setq helm-locate-command
+;;       (case system-type
+;;         ('gnu/linux "locate %s -e -A --regex %s")
+;;         ('berkeley-unix "locate %s -e -A --regex %s")
+;;         ('windows-nt "es %s")
+;;         ('darwin "mdfind -onlyin ~ %s %s")
+;;         (t "locate %s -e -A --regex %s")))
 
-(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to do persistent action
-(define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
-(define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+;; (global-set-key (kbd "M-x") 'helm-M-x)
+;; (global-set-key (kbd "C-x b") 'helm-mini)
+;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
+;; (global-set-key (kbd "C-c h") 'helm-command-prefix)
+;; (global-unset-key (kbd "C-x c"))
 
-(setq helm-quick-update                     t ; do not display invisible candidates
-      helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-      helm-buffers-fuzzy-matching           t ; fuzzy matching buffer names when non--nil
-      helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-      helm-ff-search-library-in-sexp        t ; search for library in `require' and `declare-function' sexp.
-      helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-      helm-ff-file-name-history-use-recentf t)
+;; (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) rebind tab to do persistent action
+;; (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) make TAB works in terminal
+;; (define-key helm-map (kbd "C-z")  'helm-select-action) list actions using C-z
 
-(helm-mode 1)
+;; (setq helm-quick-update                     t do not display invisible candidates
+;;       helm-split-window-in-side-p           t open helm buffer inside current window, not occupy whole other window
+;;       helm-buffers-fuzzy-matching           t fuzzy matching buffer names when non--nil
+;;       helm-move-to-line-cycle-in-source     t move to end or beginning of source when reaching top or bottom of source.
+;;       helm-ff-search-library-in-sexp        t search for library in `require' and `declare-function' sexp.
+;;       helm-scroll-amount                    8 scroll 8 lines other window using M-<next>/M-<prior>
+;;       helm-ff-file-name-history-use-recentf t)
+
+;; (helm-mode 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Custom Macros
@@ -236,6 +264,12 @@
   (insert (format-time-string "rem %Y %b %d at %H:00 +5 duration 0:30 tag none msg "
 (current-time))))
 
+(defun unfill-region (beg end)
+  "Unfill the region, joining text paragraphs into a single
+    logical line.  This is useful, e.g., for use with `visual-line-mode'."
+  (interactive "*r")
+  (let ((fill-column (point-max)))
+    (fill-region beg end)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python
