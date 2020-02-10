@@ -201,6 +201,11 @@ function mupx()
     mup xhyve
 }
 
+function ldextra()
+{
+    . $HOME/.bash.extra
+}
+
 # Bash extras
 if [ -f ~/.bash.extra ]; then
     . ~/.bash.extra
