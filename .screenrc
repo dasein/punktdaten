@@ -1,6 +1,6 @@
 escape 		      "^Tt"
 encoding              utf-8
-term                  xterm-256color
+term                  screen-256color
 altscreen             on
 nethack               on
 autodetach            on
