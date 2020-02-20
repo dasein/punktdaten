@@ -67,7 +67,7 @@ function parse_git_branch {
 function prompt
 {
   case $TERM in
-    xterm*)
+    xterm* | screen*)
       TITLEBAR='\[\033]0;\u@\h: \W\007\]'
       PROMPT='\[\033[1;32m\]\h:\[\033[0m\][\W]\[\033[0;32m\]$(parse_git_branch)\[\033[0m\]$ '
       PS1="${TITLEBAR}${PROMPT}"
