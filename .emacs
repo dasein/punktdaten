@@ -36,6 +36,8 @@
     python-pep8
     python-pylint
     swiper
+    smex
+    tramp
     virtualenv
     xcscope
     yasnippet
