@@ -15,10 +15,7 @@
 
 (setq package-user-dir "~/.emacs.d/packages")
 
-(add-to-list 'package-archives
-             '("melpa" . "http://melpa.org/packages/") t)
-(add-to-list 'package-archives
-             '("marmalade" . "http://marmalade-repo.org/packages/") t)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
 (package-initialize)
 
@@ -29,15 +26,16 @@
     go-autocomplete
     go-mode
     go-eldoc
-    jedi
+    elpy
+    blacken
     ivy
     helm
     magit
-    python-pep8
-    python-pylint
+    flycheck
     swiper
     smex
     tramp
+    use-package
     virtualenv
     xcscope
     yasnippet
@@ -276,18 +274,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'python)
-(require 'python-pep8)
-(require 'python-pylint)
-(require 'virtualenv)
 
-(add-hook 'python-mode-hook 'jedi:setup
-          (lambda ()
-            (jedi:complete-on-dot t)
-            (jedi:setup-keys t)
-            (py-indent-offset 4)
-            (indent-tabs-mode nil)
-            (py-smart-indentation nil)))
+;; Enable elpy
+(elpy-enable)
+
+;; Enable Flycheck
+(when (load "flycheck" t t)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+(add-hook 'elpy-mode-hook (lambda () (add-hook 'before-save-hook 'blacken-buffer nil t)))
+(add-hook 'elpy-mode-hook (lambda () (highlight-indentation-mode -1)))
+
+(setq python-shell-interpreter "ipython3")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Go
