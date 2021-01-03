@@ -25,12 +25,15 @@
         br = branch
         co = checkout
         df = diff
-        cl = log --date=short --no-merges --pretty='%C(red)%ad %C(yellow)%h %Creset%s %Cred[%-(trailers:unfold,only)%-]%C(bold blue)<%cn>'
+        cl = log --date=short --no-merges --pretty='%C(red)%ad %C(yellow)%h %Creset%s %C(bold blue)<%aE> %Cgreen[%-(trailers)%-]'
+        clk = "!sh -c 'git log --date=short --no-merges --pretty=\"%C(red)%ad %C(yellow)%h %Creset%s %C(bold blue)<%aE> %Cgreen[%-(trailers:key=$0,valueonly)%-]\" $1'"
         ll = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr)' --abbrev-commit --decorate --date=short
         lla = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr)' --abbrev-commit --decorate --date=short --all
         lg = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short
         lgm = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short --merges
-        merged = !sh -c \"git branch -r --merged $1/master | grep -v master | grep $1 | cut -d/ -f2-\"
+        find-merge = "!sh -c 'commit=$0 && branch=${1:-HEAD} && git rev-list $commit..$branch --ancestry-path --first-parent) | tail -1'"
+        merged = "!sh -c 'git branch -r --merged $0/$1 | grep -v $1 | grep $0 | cut -d/ -f2-'"
+        cruft = "!f() { for b in $(git branch -r); do if [ -z \"$(git log -1 --since=\"12 month ago\" -s $b --)\" ]; then echo $b; fi; done }; f"
         fixup = !sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -
         root = !pwd
         pp = push --force-with-lease
@@ -77,6 +80,7 @@
 
 [merge]
         conflictstyle = diff3
+        renamelimit = 5000
 
 [mergetool "ediff"]
         cmd = emacs -nw --eval \" \
