@@ -25,11 +25,11 @@
         br = branch
         co = checkout
         df = diff
-        cl = log --date=short --no-merges --pretty='%C(red)%ad %C(yellow)%h %Creset%s %C(bold blue)<%aE> %Cgreen[%-(trailers)%-]'
+        cl = log --date=short --no-merges --pretty='%C(red)%ad %C(yellow)%h %Creset%s %C(bold blue)<%an> %Cgreen[%-(trailers)%-]'
         clk = "!sh -c 'git log --date=short --no-merges --pretty=\"%C(red)%ad %C(yellow)%h %Creset%s %C(bold blue)<%aE> %Cgreen[%-(trailers:key=$0,valueonly)%-]\" $1'"
         ll = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr)' --abbrev-commit --decorate --date=short
         lla = log --graph --pretty=format:'%C(yellow)%h %C(green)%d %Creset%s %Cred(%cr)' --abbrev-commit --decorate --date=short --all
-        lg = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short
+        lg = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%an>' --date=short
         lgm = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short --merges
         find-merge = "!sh -c 'commit=$0 && branch=${1:-HEAD} && git rev-list $commit..$branch --ancestry-path --first-parent) | tail -1'"
         merged = "!sh -c 'git branch -r --merged $0/$1 | grep -v $1 | grep $0 | cut -d/ -f2-'"
