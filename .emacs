@@ -11,7 +11,6 @@
 ;;                             Packages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'package)
-(require 'cl)
 
 (setq package-user-dir "~/.emacs.d/packages")
 
@@ -43,7 +42,7 @@
     "A list of packages to ensure are installed at launch.")
 
 (defun preinstall-packages-installed-p ()
-  (loop for p in preinstall-packages
+  (ci-loop for p in preinstall-packages
 	when (not (package-installed-p p)) do (return nil)
 	finally (return t)))
 
