@@ -18,45 +18,32 @@
 
 (package-initialize)
 
-(defvar preinstall-packages
-  '(
-    auto-complete
-    counsel
-    go-autocomplete
-    go-mode
-    go-eldoc
-    elpy
-    blacken
-    ivy
-    helm
-    magit
-    flycheck
-    swiper
-    smex
-    tramp
-    use-package
-    virtualenv
-    xcscope
-    yasnippet
-    zenburn-theme)
-    "A list of packages to ensure are installed at launch.")
-
-(defun preinstall-packages-installed-p ()
-  (ci-loop for p in preinstall-packages
-	when (not (package-installed-p p)) do (return nil)
-	finally (return t)))
-
-(unless (preinstall-packages-installed-p)
-  ;; check for new packages (package versions)
-  (message "%s" "Emacs is now refreshing its package database...")
-  (package-refresh-contents)
-  (message "%s" " done.")
-  ;; install the missing packages
-  (dolist (p preinstall-packages)
-    (when (not (package-installed-p p))
-      (package-install p))))
-
-(provide 'preinstall-packages)
+(mapc
+ (lambda (package)
+   (unless (package-installed-p package)
+     (progn (message "installing %s" package)
+            (package-refresh-contents)
+            (package-install package))))
+ '(
+   auto-complete
+   counsel
+   go-autocomplete
+   go-mode
+   go-eldoc
+   elpy
+   blacken
+   ivy
+   helm
+   magit
+   flycheck
+   swiper
+   smex
+   tramp
+   use-package
+   virtualenv
+   xcscope
+   yasnippet
+   zenburn-theme))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Some Basics
