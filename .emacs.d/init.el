@@ -7,6 +7,9 @@
       (normal-top-level-add-to-load-path '("."))
       (normal-top-level-add-subdirs-to-load-path))
 
+(setq custom-file "~/.emacs.d/custom.el")
+(load custom-file)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                             Packages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,6 +46,7 @@
    virtualenv
    xcscope
    yasnippet
+   which-key
    zenburn-theme))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -59,12 +63,11 @@
 (global-set-key (kbd "C-b") 'backward-word)
 (global-set-key (kbd "C-f") 'forward-word)
 
+;; Refresh buffer if file change on disk
+(global-auto-revert-mode t)
+
 ;; Turn on font-lock mode for Emacs
 (global-font-lock-mode t)
-
-;; Don't show the startup screen and disable menu
-(setq inhibit-startup-message t)
-(menu-bar-mode -1)
 
 ;; Invoke M-X without alt key
 (global-set-key "\C-c\C-m" 'execute-extended-command)
@@ -111,6 +114,8 @@
 ;; Turn on line and column numbers
 (setq line-number-mode t)
 (setq column-number-mode t)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(setq-default display-line-numbers-width 3)
 
 ;; Gotta see matching parens
 (show-paren-mode t)
@@ -130,6 +135,9 @@
 
 ;; "y or n" instead of "yes or no"
 (fset 'yes-or-no-p 'y-or-n-p)
+
+;; Save registers etc.
+(desktop-save-mode)
 
 ;; Always start server
 (load "server")
@@ -152,6 +160,30 @@
   '(("zenburn-bg" . "#505050")
     ("zenburn-fg" . "#DCDCCC")))
 (load-theme 'zenburn t)
+
+;; Split windows evenly for multiple file visits
+(setq split-height-threshold nil)
+
+(defadvice server-visit-files
+  (around server-visit-files-custom-find
+      activate compile)
+  "Maintain a counter of visited files from a single client call."
+  (let ((server-visit-files-custom-find:buffer-count 0))
+    ad-do-it))
+
+(defun server-visit-hook-custom-find ()
+  "Arrange to visit the files from a client call in separate windows."
+  (if (zerop server-visit-files-custom-find:buffer-count)
+      (progn
+    (delete-other-windows)
+    (switch-to-buffer (current-buffer)))
+    (let ((buffer (current-buffer))
+      (window (split-window-sensibly)))
+      (switch-to-buffer buffer)
+      (balance-windows)))
+  (setq server-visit-files-custom-find:buffer-count
+    (1+ server-visit-files-custom-find:buffer-count)))
+(add-hook 'server-visit-hook 'server-visit-hook-custom-find)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mutt
@@ -176,13 +208,40 @@
 (add-hook 'mail-mode-hook 'das-mail-mode-hook)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Org mode
+;; Help modes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'org-install)
-(add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
-(define-key global-map "\C-cl" 'org-store-link)
-(define-key global-map "\C-ca" 'org-agenda)
-(setq org-log-done t)
+;; Show the help buffer after startup
+(add-hook 'after-init-hook 'help-quick)
+
+;; shows a popup of available keybindings
+(use-package which-key
+  :ensure t
+  :config
+  (which-key-mode))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;   Minibuffer/completion settings
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; For help, see: https://www.masteringemacs.org/article/understanding-minibuffer-completion
+
+(setq enable-recursive-minibuffers t)                ; Use the minibuffer whilst in the minibuffer
+(setq completion-cycle-threshold 1)                  ; TAB cycles candidates
+(setq completions-detailed t)                        ; Show annotations
+(setq tab-always-indent 'complete)                   ; When I hit TAB, try to complete, otherwise, indent
+(setq completion-styles '(basic initials substring)) ; Different styles to match input to candidates
+
+(setq completion-auto-help 'always)                  ; Open completion always; `lazy' another option
+(setq completions-max-height 10)                     ; This is arbitrary
+(setq completions-detailed t)
+(setq completions-format 'one-column)
+(setq completions-group t)
+(setq completion-auto-select 'second-tab)            ; Much more eager
+;(setq completion-auto-select t)                     ; See `C-h v completion-auto-select' for more possible values
+
+(keymap-set minibuffer-mode-map "TAB" 'minibuffer-complete) ; TAB acts more like how it does in the shell
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Ivy mode
@@ -194,14 +253,16 @@
    ("C-'" . ivy-avy))
   :config
   (ivy-mode 1)
+  ;; Wrap around search results
+  (setq ivy-wrap t)
   ;; Current and total number in collection prompt
   (setq ivy-count-format "(%d/%d) ")
   ;; add `recentf-mode` and bookmarks to `ivy-switch-buffer`
   (setq ivy-use-virtual-buffers t)
   ;; number of result lines to display
-  (setq ivy-height 10)
+  (setq ivy-height 20)
   ;; does not count candidates
-  (setq ivy-count-format "")
+  ;;(setq ivy-count-format "")
   ;; no regexp by default
   (setq ivy-initial-inputs-alist nil)
   ;; configure regexp engine.
@@ -209,12 +270,30 @@
 	;; allow input not in order
         '((t   . ivy--regex-ignore-order))))
 
+
+(defun relative-counsel-ag ()
+  (interactive)
+  (counsel-ag "" default-directory))
+
+(defun ivy-lookup-point (cmd)
+  (let ((ivy-initial-inputs-alist
+         (list
+          (cons cmd (thing-at-point 'symbol)))))
+    (funcall cmd)))
+
+(defun counsel-lookup-point ()
+  (interactive)
+  (ivy-lookup-point 'counsel-ag))
+
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "C-l") 'ivy-backward-delete-char)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-(global-set-key (kbd "C-c g") 'counsel-git)
-(global-set-key (kbd "C-c j") 'counsel-git-grep)
+(global-set-key (kbd "C-c f") 'counsel-git)
+(global-set-key (kbd "C-c s") 'counsel-ag)
+(global-set-key (kbd "C-c k") 'relative-counsel-ag)
+(global-set-key (kbd "C-c g") 'counsel-git-grep)
+(global-set-key (kbd "C-c j") 'counsel-lookup-point)
 (global-set-key (kbd "C-x l") 'counsel-locate)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -308,3 +387,8 @@
 (cscope-minor-mode t)
 (setq cscope-close-window-after-select t)
 (setq cscope-do-not-update-database t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; magit
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq magit-define-global-key-bindings 'recommended)
