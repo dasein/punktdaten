@@ -10,7 +10,7 @@ function buildenv
 {
   case $OS in
     Darwin)
-      export PATH=/opt/local/bin:/opt/local/sbin:$DEF_PATH
+      export PATH=/opt/homebrew/bin:/opt/homebrew/sbin:/opt/local/bin:/opt/local/sbin:$DEF_PATH
       export MANPATH=/opt/local/share/man:$MANPATH
       ;;
     FreeBSD)
@@ -99,6 +99,7 @@ alias j="jobs -l"
 alias la="ls -a"
 alias lf="ls -FA"
 alias ll="ls -lA"
+alias python=/opt/homebrew/bin/python3
 
 if [ -S "$SSH_AUTH_SOCK" ] && [ ! -h "$SSH_AUTH_SOCK" ]; then
     ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock
@@ -113,28 +114,26 @@ ssh-ec2user() { ssh -A ec2-user@$@; }
 # Useful functions
 function bld()
 {
+    if which gmake >/dev/null; then
+        MAKE="gmake"
+    else
+        MAKE="make"
+    fi
     if [ -z $CORES ]; then
-        cores=$(python -c "import multiprocessing; print multiprocessing.cpu_count()")
+        cores=$(python3 -c "import multiprocessing; print(multiprocessing.cpu_count())")
     else
         cores=$CORES
     fi
     TIMEFORMAT="%R"
-    build="make -j$cores "$@""
+    build="$MAKE -j$cores "$@""
     { TIME=$( { time $build 1>&3- 2>&4-; } 2>&1 ); } 3>&1 4>&2
     status=$?
     if [[ $status != 0 ]]; then
-        echo "bld $@ FAILED!" >&2
+        echo "FAILED in $TIME seconds using $cores job(s) [ $@ ] " >&2
     else
-        echo bld "$@" took $TIME seconds using $cores job\(s\)
+        echo "PASSED in $TIME seconds using $cores job(s) [ $@ ] "
     fi
     return $status
-}
-
-function setvenv()
-{
-    export WORKON_HOME=$HOME/.virtualenvs
-    export PIP_VIRTUALENV_BASE=$WORKON_HOME
-    which virtualenvwrapper.sh > /dev/null 2>&1 && source `which virtualenvwrapper.sh`
 }
 
 function aes_load()
@@ -168,37 +167,14 @@ function cs()
     cat $@ | cowsay -W80 -e @@ -T PP
 }
 
-function mup()
-{
-   if [ -z "$@" ]
-     then
-       echo "Provide vm-driver as argument. (e.g mup virtualbox)"; return
-   fi
-    minikube start --vm-driver $@ --cpus 4 --memory 4096 --disk-size 50g --kubernetes-version=v1.6.4;
-    kubectl config use-context dev;
-    eval "$(minikube docker-env)";
-    if grep "$(minikube ip)" /etc/hosts; then
-        echo "Minikube ip is defined in /etc/hosts";
-    else
-        echo "Updating dev.local entry in /etc/hosts (may need sudo)";
-        sudo sed -i.bak "/dev.local/d" /etc/hosts;
-        sudo sh -c 'echo "$(minikube ip)    dev.local api.dev.brkt.net ui.dev.brkt.net rpc.dev.brkt.net" >> /etc/hosts';
-    fi
-}
 
-function mupv()
+function require_args()
 {
-    mup virtualbox
-}
+if [ -z "$2" ]; then
+    echo "Error: Requires $1 as an argument to this function"
+    return 1
+fi
 
-function mupf()
-{
-    mup virtualbox
-}
-
-function mupx()
-{
-    mup xhyve
 }
 
 function ldextra()

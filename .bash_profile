@@ -12,3 +12,4 @@ fi
 if [ -f /Users/herbert/Downloads/google-cloud-sdk/path.bash.inc ]; then
   source '/Users/herbert/Downloads/google-cloud-sdk/path.bash.inc'
 fi
+eval "$(/opt/homebrew/bin/brew shellenv)"
