@@ -3,18 +3,29 @@
 # Links up files and dirs in my dotfiles repo to $HOME
 # Clobbers links, nothing else.
 
-cd $(dirname $0)/..
+root=$(dirname -- $(dirname -- $(readlink -f -- "$0")))
+cd "$root" || exit
 
 git submodule update --init
 
-dotdir=$(pwd)
-dotfiles=$(find . -mindepth 1 -maxdepth 1 -name .git -prune -o -exec basename {} \;)
+dotfiles=$(find . -mindepth 1 -maxdepth 1  -iname ".*" ! -name .git -exec basename {} \;)
+binfiles=$(find ./bin -mindepth 1 -maxdepth 1 -exec basename {} \;)
 
 for dot in $dotfiles; do
     if [ ! -e "$HOME/$dot" ] || [ -h "$HOME/$dot" ]; then
-        ln -fs "$dotdir/$dot" $HOME
+        ln -fs "$root/$dot" "$HOME"
         echo "Linked: $HOME/$dot"
     else
         echo "ERROR: $HOME/$dot is real and exists"
+    fi
+done
+
+mkdir -p "$HOME/bin"
+for b in $binfiles; do
+    if [ ! -e "$HOME/bin/$b" ] || [ -h "$HOME/bin/$b" ]; then
+        ln -fs "$root/bin/$b" "$HOME/bin"
+        echo "Linked: $HOME/bin/$b"
+    else
+        echo "ERROR: $HOME/bin/$b is real and exists"
     fi
 done
