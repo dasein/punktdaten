@@ -5,7 +5,7 @@
 
 [email-aliases]
         # Used by the set_user_email() pre-commit hook
-        w = hpfennig@vmware.com
+        w = hpfennig@splunk.com
         p = dasein555@gmail.com
 
 [branch]
@@ -17,6 +17,12 @@
 
 [init]
 	templatedir = ~/.git_template
+
+[core]
+        editor = emacs -nw --no-init-file --no-site-file --load ~/.emacs.git
+        whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
+        excludesfile = ~/.gitignore_global
+        hooksPath = /Users/hpfennig/.git_template/hooks/
 
 [alias]
         s = status -sb
@@ -67,11 +73,6 @@
 [color]
         ui = true
 
-[core]
-        editor = emacs -nw --no-init-file --no-site-file --load ~/.emacs.git
-        whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
-        excludesfile = ~/.gitignore_global
-
 [diff "gunzip"]
         textconv = gunzip -c
 
@@ -79,6 +80,7 @@
         textconv = tcpdump -qns 0 -X -r
 
 [merge]
+        tool = ediff
         conflictstyle = diff3
         renamelimit = 5000
 
@@ -104,9 +106,3 @@
         ediff-quit-merge-hook 'ediff-write-merge-buffer)\
   (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\"\
                                    \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
-
-[merge]
-        tool = ediff
-
-[rerere]
-	enabled = 1
