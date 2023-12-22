@@ -289,12 +289,78 @@
 (global-set-key (kbd "C-l") 'ivy-backward-delete-char)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-(global-set-key (kbd "C-c f") 'counsel-git)
+(global-set-key (kbd "C-c a") 'counsel-git)
 (global-set-key (kbd "C-c s") 'counsel-ag)
+(global-set-key (kbd "C-c d") 'counsel-git-grep)
 (global-set-key (kbd "C-c k") 'relative-counsel-ag)
-(global-set-key (kbd "C-c g") 'counsel-git-grep)
 (global-set-key (kbd "C-c j") 'counsel-lookup-point)
 (global-set-key (kbd "C-x l") 'counsel-locate)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Python
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Enable elpy
+(elpy-enable)
+
+;; Enable Flycheck
+(when (load "flycheck" t t)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+(add-hook 'elpy-mode-hook (lambda () (add-hook 'before-save-hook 'blacken-buffer nil t)))
+(add-hook 'elpy-mode-hook (lambda () (highlight-indentation-mode -1)))
+
+(setq python-shell-interpreter "ipython3")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Go
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'auto-complete)
+(require 'go-autocomplete)
+(require 'auto-complete-config)
+(require 'yasnippet)
+
+(add-hook 'go-mode-hook 'auto-complete-mode
+          (lambda ()
+            (ac-go-expand-arguments-into-snippets "yes")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; magit
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq magit-define-global-key-bindings 'recommended)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Custom Macros
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Remind Macro
+(defun insert-remind-entry ()
+  ""
+  (interactive)
+  (insert (format-time-string "rem %Y %b %d at %H:00 +5 duration 0:30 tag none msg "
+(current-time))))
+
+(defun unfill-region (beg end)
+  "Unfill the region, joining text paragraphs into a single
+    logical line.  This is useful, e.g., for use with `visual-line-mode'."
+  (interactive "*r")
+  (let ((fill-column (point-max)))
+    (fill-region beg end)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                       ***** Deprecated *****
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; cscope
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; All keybindings use the "C-c s" prefix:
+;; (require 'xcscope)
+;; (cscope-minor-mode t)
+;;  (setq cscope-close-window-after-select t)
+;;  (setq cscope-do-not-update-database t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helm mode
@@ -331,64 +397,3 @@
 ;;       helm-ff-file-name-history-use-recentf t)
 
 ;; (helm-mode 1)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Custom Macros
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Remind Macro
-(defun insert-remind-entry ()
-  ""
-  (interactive)
-  (insert (format-time-string "rem %Y %b %d at %H:00 +5 duration 0:30 tag none msg "
-(current-time))))
-
-(defun unfill-region (beg end)
-  "Unfill the region, joining text paragraphs into a single
-    logical line.  This is useful, e.g., for use with `visual-line-mode'."
-  (interactive "*r")
-  (let ((fill-column (point-max)))
-    (fill-region beg end)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Python
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Enable elpy
-(elpy-enable)
-
-;; Enable Flycheck
-(when (load "flycheck" t t)
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-  (add-hook 'elpy-mode-hook 'flycheck-mode))
-
-(add-hook 'elpy-mode-hook (lambda () (add-hook 'before-save-hook 'blacken-buffer nil t)))
-(add-hook 'elpy-mode-hook (lambda () (highlight-indentation-mode -1)))
-
-(setq python-shell-interpreter "ipython3")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Go
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'auto-complete)
-(require 'go-autocomplete)
-(require 'auto-complete-config)
-(require 'yasnippet)
-
-(add-hook 'go-mode-hook 'auto-complete-mode
-          (lambda ()
-            (ac-go-expand-arguments-into-snippets "yes")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; cscope
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; All keybindings use the "C-c s" prefix:
-(require 'xcscope)
-(cscope-minor-mode t)
-(setq cscope-close-window-after-select t)
-(setq cscope-do-not-update-database t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; magit
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq magit-define-global-key-bindings 'recommended)
