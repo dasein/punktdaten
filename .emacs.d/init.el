@@ -36,15 +36,14 @@
    elpy
    blacken
    ivy
-   helm
    magit
    flycheck
+   rego-mode
    swiper
    smex
    tramp
    use-package
    virtualenv
-   xcscope
    yasnippet
    which-key
    zenburn-theme))
@@ -112,7 +111,7 @@
 (electric-indent-mode 0)
 
 ;; Turn on line and column numbers
-(setq line-number-mode t)
+;; (setq line-number-mode t)
 (setq column-number-mode t)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (setq-default display-line-numbers-width 3)
@@ -270,7 +269,6 @@
 	;; allow input not in order
         '((t   . ivy--regex-ignore-order))))
 
-
 (defun relative-counsel-ag ()
   (interactive)
   (counsel-ag "" default-directory))
@@ -285,16 +283,18 @@
   (interactive)
   (ivy-lookup-point 'counsel-ag))
 
+(setenv "FZF_DEFAULT_COMMAND" "ag --hidden --ignore .git/ -Ul")
+
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "C-l") 'ivy-backward-delete-char)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-(global-set-key (kbd "C-c a") 'counsel-git)
+(global-set-key (kbd "C-c a") 'counsel-rg)
 (global-set-key (kbd "C-c s") 'counsel-ag)
 (global-set-key (kbd "C-c d") 'counsel-git-grep)
 (global-set-key (kbd "C-c k") 'relative-counsel-ag)
 (global-set-key (kbd "C-c j") 'counsel-lookup-point)
-(global-set-key (kbd "C-x l") 'counsel-locate)
+(global-set-key (kbd "C-c l") 'counsel-fzf)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python
@@ -347,53 +347,3 @@
   (interactive "*r")
   (let ((fill-column (point-max)))
     (fill-region beg end)))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                       ***** Deprecated *****
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; cscope
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; All keybindings use the "C-c s" prefix:
-;; (require 'xcscope)
-;; (cscope-minor-mode t)
-;;  (setq cscope-close-window-after-select t)
-;;  (setq cscope-do-not-update-database t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Helm mode
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (require 'helm)
-;; (require 'helm-config)
-
-;; (if (eq system-type 'darwin) (setq helm-locate-fuzzy-match nil))
-;; (setq helm-locate-command
-;;       (case system-type
-;;         ('gnu/linux "locate %s -e -A --regex %s")
-;;         ('berkeley-unix "locate %s -e -A --regex %s")
-;;         ('windows-nt "es %s")
-;;         ('darwin "mdfind -onlyin ~ %s %s")
-;;         (t "locate %s -e -A --regex %s")))
-
-;; (global-set-key (kbd "M-x") 'helm-M-x)
-;; (global-set-key (kbd "C-x b") 'helm-mini)
-;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
-;; (global-set-key (kbd "C-c h") 'helm-command-prefix)
-;; (global-unset-key (kbd "C-x c"))
-
-;; (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) rebind tab to do persistent action
-;; (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) make TAB works in terminal
-;; (define-key helm-map (kbd "C-z")  'helm-select-action) list actions using C-z
-
-;; (setq helm-quick-update                     t do not display invisible candidates
-;;       helm-split-window-in-side-p           t open helm buffer inside current window, not occupy whole other window
-;;       helm-buffers-fuzzy-matching           t fuzzy matching buffer names when non--nil
-;;       helm-move-to-line-cycle-in-source     t move to end or beginning of source when reaching top or bottom of source.
-;;       helm-ff-search-library-in-sexp        t search for library in `require' and `declare-function' sexp.
-;;       helm-scroll-amount                    8 scroll 8 lines other window using M-<next>/M-<prior>
-;;       helm-ff-file-name-history-use-recentf t)
-
-;; (helm-mode 1)

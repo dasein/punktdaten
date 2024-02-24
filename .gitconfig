@@ -1,3 +1,6 @@
+[includeIf "gitdir:~/work/"]
+    path = ~/work/.gitconfig
+
 [user]
         #email is set on a per repo basis using [email-aliases] section
         name = "Herbert Pfennig"
@@ -50,6 +53,9 @@
 	aliases = !git config --get-regexp 'alias.*' | colrm 1 6 | sed 's/[ ]/ = /' | sort
 
 [color]
+        ui = true
+
+[color]
         branch = auto
         diff = auto
         status = auto
@@ -69,9 +75,6 @@
         added = yellow
         changed = green
         untracked = cyan
-
-[color]
-        ui = true
 
 [diff "gunzip"]
         textconv = gunzip -c
