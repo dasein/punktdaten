@@ -29,13 +29,15 @@
             (package-install package))))
  '(
    auto-complete
+   blacken
    counsel
    gptel
    go-autocomplete
    go-mode
    go-eldoc
    elpy
-   blacken
+   flycheck
+   forge
    ivy
    magit
    forge
@@ -345,11 +347,70 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; magit
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq magit-define-global-key-bindings 'recommended)
-(use-package forge
-   :after magit)
+(use-package magit
+  :config
+  (setq magit-define-global-key-bindings 'recommended)
+  (setq magit-push-current-set-remote-if-missing nil)
+  (setq magit-branch-pull-margin nil))
 
-(setq magit-push-current-set-remote-if-missing nil)
+(use-package forge
+  :after magit)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; gptel
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(global-set-key (kbd "C-c C-c") 'gptel)
+(global-set-key (kbd "C-c i") 'gptel-menu)
+
+(use-package gptel
+  :config
+  (define-key gptel-mode-map (kbd "C-c RET") 'gptel-menu)
+  (setq gptel-model 'claude-3.7-sonnet
+        gptel-backend (gptel-make-gh-copilot "Copilot")))
+
+(gptel-make-ollama "local-llama"
+  :host "hpfennig-dt.internal:11434"
+  :stream t
+  :models '("llama3.1:8b"))
+
+(gptel-make-ollama "local-mistral"
+  :host "hpfennig-dt.internal:11434"
+  :stream t
+  :models '("mistral:latest"))
+
+(gptel-make-gh-copilot "Copilot")
+
+
+;; Preset prompts
+(gptel-make-preset 'c-refactor
+  :description "Refactor code to improve readability and performance"
+  :system "Refactor the provided code to improve readability, maintainability, and performance. Apply best practices and design patterns appropriate for the language. Explain your key changes using code comments inline with the code."
+  :temperature 0.2)
+
+(gptel-make-preset 'c-comment
+  :description "Generate comments for code"
+  :system "Generate comprehensive comments for the provided code to explain what the code is doing. The goal is not to be verbose, but to provide clarity for complex code sections and to provide a general overview when read, as to what the code is doing. Follow documentation best practices for the language."
+  :temperature 0.3)
+
+(gptel-make-preset 'c-document
+  :description "Generate documentation for code"
+  :system "Generate comprehensive documentation for the provided code. Include function descriptions, parameter explanations, return values, and usage examples. Follow documentation best practices for the language."
+  :temperature 0.3)
+
+(gptel-make-preset 'c-architect
+  :description "Design code architecture"
+  :system "Design a clean, maintainable architecture for the described programming task. Include component breakdown, interfaces, data flow, and design patterns. Consider scalability and future extensibility."
+  :temperature 0.7)
+
+(gptel-make-preset 'c-optimize
+  :description "Optimize code for performance"
+  :system "Analyze the provided code for performance bottlenecks and optimize it. Focus on algorithmic improvements, memory usage, and execution speed. Explain your optimization strategy."
+  :temperature 0.2)
+
+(gptel-make-preset 'c-debug
+  :description "Debug problematic code"
+  :system "Analyze the provided code for bugs, edge cases, or potential issues. Suggest fixes and explain the reasoning behind each problem identified."
+  :temperature 0.3)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Custom Macros
