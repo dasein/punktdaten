@@ -51,6 +51,7 @@
         staaash = stash --all
         save = !git branch -f `git rev-parse --abbrev-ref HEAD`-save-`date +%Y-%m-%d` HEAD
 	aliases = !git config --get-regexp 'alias.*' | colrm 1 6 | sed 's/[ ]/ = /' | sort
+	make-patch = "!bash -c \"cd ${GIT_PREFIX:-.};git add .;git commit -m uncommited; git format-patch HEAD~1; git reset HEAD~1\""
 
 [color]
         ui = true
