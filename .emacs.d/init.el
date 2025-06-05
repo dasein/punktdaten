@@ -30,6 +30,7 @@
  '(
    auto-complete
    counsel
+   gptel
    go-autocomplete
    go-mode
    go-eldoc
@@ -37,6 +38,7 @@
    blacken
    ivy
    magit
+   forge
    flycheck
    rego-mode
    swiper
@@ -141,6 +143,10 @@
 ;; Always start server
 (load "server")
 (unless (server-running-p) (server-start))
+
+;; Where I keep secrets for emacs
+;; TODO use gpg
+(setq auth-sources '("~/.authinfo"))
 
 ;; Highlight changes
 (global-highlight-changes-mode t)
@@ -273,6 +279,14 @@
   (interactive)
   (counsel-ag "" default-directory))
 
+(defun gitroot-counsel-fzf ()
+  (interactive)
+  ;;(counsel-fzf "" vc-dir-root ""))
+  (let ((git-dir (locate-dominating-file default-directory ".git")))
+    (if git-dir
+        (counsel-fzf "" git-dir "")
+      (counsel-fzf))))
+
 (defun ivy-lookup-point (cmd)
   (let ((ivy-initial-inputs-alist
          (list
@@ -283,9 +297,10 @@
   (interactive)
   (ivy-lookup-point 'counsel-ag))
 
-(setenv "FZF_DEFAULT_COMMAND" "ag --hidden --ignore .git/ -Ul")
+;;(setenv "FZF_DEFAULT_COMMAND" "ag --ignore .git/ -Ul")
+(setenv "FZF_DEFAULT_COMMAND" "rg --files --hidden --follow --glob '!.git'")
 
-(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-c m") 'counsel-M-x)
 (global-set-key (kbd "C-l") 'ivy-backward-delete-char)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
@@ -294,21 +309,23 @@
 (global-set-key (kbd "C-c d") 'counsel-git-grep)
 (global-set-key (kbd "C-c k") 'relative-counsel-ag)
 (global-set-key (kbd "C-c j") 'counsel-lookup-point)
-(global-set-key (kbd "C-c l") 'counsel-fzf)
+(global-set-key (kbd "C-c l") 'gitroot-counsel-fzf)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Enable elpy
-(elpy-enable)
+(use-package elpy
+  :ensure t
+  :init
+  (elpy-enable))
 
 ;; Enable Flycheck
 (when (load "flycheck" t t)
   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
   (add-hook 'elpy-mode-hook 'flycheck-mode))
 
-(add-hook 'elpy-mode-hook (lambda () (add-hook 'before-save-hook 'blacken-buffer nil t)))
+;;(add-hook 'elpy-mode-hook (lambda () (add-hook 'before-save-hook 'blacken-buffer nil t)))
 (add-hook 'elpy-mode-hook (lambda () (highlight-indentation-mode -1)))
 
 (setq python-shell-interpreter "ipython3")
@@ -329,6 +346,10 @@
 ;; magit
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq magit-define-global-key-bindings 'recommended)
+(use-package forge
+   :after magit)
+
+(setq magit-push-current-set-remote-if-missing nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Custom Macros
