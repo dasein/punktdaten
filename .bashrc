@@ -35,7 +35,7 @@ export GOPATH=$HOME/work/go
 
 # Default Lang Support
 export LANG=en_US.UTF-8
-export LC_ALL=C
+export LC_ALL=en_US.UTF-8
 
 # Editor
 if [ "$(which emacs > /dev/null; echo $?)" = 0 ]; then
