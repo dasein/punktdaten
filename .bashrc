@@ -48,10 +48,10 @@ fi
 
 # A better history
 shopt -s histappend
-export HISTCONTROL=ignoreboth # ignore space and dupes
+export HISTCONTROL=ignoreboth:erasedups # ignore space and dupes
 export HISTFILESIZE=1000000
 export HISTSIZE=1000000
-export PROMPT_COMMAND='history -a'
+PROMPT_COMMAND="history -a; history -r"
 
 # http://geoff.greer.fm/lscolors/
 export CLICOLOR=1

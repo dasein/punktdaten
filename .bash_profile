@@ -1,6 +1,6 @@
 # .bash_profile sourced in login shells.
-if [ -f .bashrc ]; then
-    . .bashrc
+if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
 fi
 
 # bash aliases

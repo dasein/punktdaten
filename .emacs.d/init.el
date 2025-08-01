@@ -365,7 +365,7 @@
 (use-package gptel
   :config
   (define-key gptel-mode-map (kbd "C-c RET") 'gptel-menu)
-  (setq gptel-model 'claude-3.7-sonnet
+  (setq gptel-model 'gpt-4.1
         gptel-backend (gptel-make-gh-copilot "Copilot")))
 
 (gptel-make-ollama "local-llama"
