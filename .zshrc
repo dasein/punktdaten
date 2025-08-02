@@ -47,11 +47,11 @@ prompt() {
 
   # Set terminal title
   precmd() {
-    print -Pn "\e]0;%n@%m: %~ $(parse_git_branch)\a"
+    print -Pn "\e]0;%n@%m: %~ $(git-branch)\a"
   }
 
   # Actual prompt
-  PROMPT="${USRHOST}${BLUE}[%1~]${GREEN}\$(parse_git_branch)${RESET}%# "
+  PROMPT="${USRHOST}${BLUE}[%1~]${GREEN}\$(git-branch)${RESET}%# "
 }
 prompt
 

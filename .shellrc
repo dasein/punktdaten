@@ -51,24 +51,19 @@ export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
 # Helpful Aliases
 alias lsd="ls -lta | grep dr | sort"
 alias cdg='cd $(git root)'
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
 alias c='clear'
 alias h="history 25"
 alias j="jobs -l"
-alias la="ls -a"
-alias lf="ls -FA"
 alias ll="ls -lA"
-alias python=/opt/homebrew/bin/python3
+alias k="kubectl"
+alias kc='kubectl config get-contexts --no-headers -o name | sort'
 
 # SSH Helper Functions
-ssh-herb() { ssh -A "herb@$*"; }
 ssh-ubuntu() { ssh -A "ubuntu@$*"; }
 ssh-ec2user() { ssh -A "ec2-user@$*"; }
 
 # Useful functions
-parse_git_branch() {
+git-branch() {
   ref=$(git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/') || return
   echo "$ref"
 }
@@ -133,3 +128,5 @@ starttransfer:  %{time_starttransfer}s\n\
 -------------------------\n\
         total:  %{time_total}s\n" "$@"
 }
+
+source virtualenvwrapper.sh

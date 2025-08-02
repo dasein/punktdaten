@@ -25,10 +25,10 @@ prompt() {
   fi
 
   # Set XTerm/tmux window title
-  local TITLEBAR="\[\e]0;\u@\h: \W \$(parse_git_branch)\a\]"
+  local TITLEBAR="\[\e]0;\u@\h: \W \$(git-branch)\a\]"
 
   # Actual prompt
-  PS1="${TITLEBAR}${USRHOST}${BLUE}[\W]${GREEN}\$(parse_git_branch)${RESET}\$ "
+  PS1="${TITLEBAR}${USRHOST}${BLUE}[\W]${GREEN}\$(git-branch)${RESET}\$ "
 }
 prompt
 
