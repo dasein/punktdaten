@@ -3,7 +3,7 @@
 
 # Default Paths
 SPATH="/sbin:/usr/sbin:/usr/local/sbin"
-DEF_PATH=${DEF_PATH:-/usr/local/bin:$HOME/bin:$HOME/work/go/bin:$SPATH:$PATH}
+DEF_PATH=${DEF_PATH:-/usr/local/bin:$HOME/bin:$HOME/work/go/bin:$HOME/.local/bin:$SPATH:$PATH}
 
 if [ "$(uname -s)" = "Darwin" ]; then
   export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/opt/local/bin:/opt/local/sbin:$DEF_PATH"

@@ -147,8 +147,7 @@
 (unless (server-running-p) (server-start))
 
 ;; Where I keep secrets for emacs
-;; TODO use gpg
-(setq auth-sources '("~/.authinfo"))
+(setq auth-sources '("~/.authinfo" "~/.authinfo.gpg"))
 
 ;; Highlight changes
 (global-highlight-changes-mode t)
@@ -169,7 +168,8 @@
 (load-theme 'zenburn t)
 
 ;; Split windows evenly for multiple file visits
-(setq split-height-threshold nil)
+(setq split-height-threshold 0)
+(setq split-width-threshold nil)
 
 (defadvice server-visit-files
   (around server-visit-files-custom-find
@@ -258,6 +258,8 @@
   :bind
   (:map ivy-mode-map
    ("C-'" . ivy-avy))
+  (:map ivy-minibuffer-map
+   ("C-o" . ivy-dispatching-done))
   :config
   (ivy-mode 1)
   ;; Wrap around search results
@@ -277,13 +279,17 @@
 	;; allow input not in order
         '((t   . ivy--regex-ignore-order))))
 
+
+(defun counsel-lookup-point ()
+  (interactive)
+  (ivy-lookup-point 'counsel-ag))
+
 (defun relative-counsel-ag ()
   (interactive)
   (counsel-ag "" default-directory))
 
 (defun gitroot-counsel-fzf ()
   (interactive)
-  ;;(counsel-fzf "" vc-dir-root ""))
   (let ((git-dir (locate-dominating-file default-directory ".git")))
     (if git-dir
         (counsel-fzf "" git-dir "")
@@ -295,9 +301,38 @@
           (cons cmd (thing-at-point 'symbol)))))
     (funcall cmd)))
 
-(defun counsel-lookup-point ()
+(defun ivy-lookup-repos ()
   (interactive)
-  (ivy-lookup-point 'counsel-ag))
+  (let* ((repos-dir (read-directory-name "Search repos in directory: " "~/work"))
+         (default-directory repos-dir)
+         (git-dirs (split-string
+                   (shell-command-to-string
+                    "find . -maxdepth 5 -name .git -type d -prune -print")
+                   "\n" t))
+         (repo-dirs (mapcar (lambda (git-dir)
+                             (file-name-directory git-dir))
+                           git-dirs)))
+    (if repo-dirs
+        (ivy-read "Select repository: " repo-dirs
+                  :action '(1
+                            ("o" (lambda (dir)
+                                   (let ((repo-path (expand-file-name dir repos-dir)))
+                                     (dired repo-path)
+                                     (magit-status repo-path)))
+                             "open dired and magit status")
+                            ("d" (lambda (dir)
+                                   (dired (expand-file-name dir repos-dir)))
+                             "open dired only")
+                            ("m" (lambda (dir)
+                                   (let ((repo-path (expand-file-name dir repos-dir)))
+                                     (magit-status repo-path)))
+                             "open magit status only")
+                            ("f" (lambda (dir)
+                                   (let ((repo-path (expand-file-name dir repos-dir)))
+                                     (counsel-find-file "" repo-path)))
+                             "find file in repository")))
+      (message "No git repositories found in %s" repos-dir))))
+
 
 ;;(setenv "FZF_DEFAULT_COMMAND" "ag --ignore .git/ -Ul")
 (setenv "FZF_DEFAULT_COMMAND" "rg --files --hidden --follow --glob '!.git'")
@@ -312,6 +347,7 @@
 (global-set-key (kbd "C-c k") 'relative-counsel-ag)
 (global-set-key (kbd "C-c j") 'counsel-lookup-point)
 (global-set-key (kbd "C-c l") 'gitroot-counsel-fzf)
+(global-set-key (kbd "C-c r") 'ivy-lookup-repos)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python
@@ -351,10 +387,42 @@
   :config
   (setq magit-define-global-key-bindings 'recommended)
   (setq magit-push-current-set-remote-if-missing nil)
-  (setq magit-branch-pull-margin nil))
+  (setq magit-branch-pull-margin nil)
+  (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
 (use-package forge
-  :after magit)
+  :after magit
+  :config
+  ;; Go back 90 days for default forge PR history
+  (setq forge--initial-topic-until "2025-05-01")
+
+  ;; (setq forge--initial-topic-until
+  ;;       (format-time-string "%Y-%m-%d"
+  ;;                           (time-subtract (current-time)
+  ;;                                        (days-to-time 90))))
+
+  ;; Filter PRs in magit status buffer to show only those assigned to me
+  (let ((topic-filter (forge--topics-spec :type 'topic
+                                          :active t
+                                          :state 'open
+                                          :assignee "hpfennig"
+                                          :order 'recently-updated)))
+  (setq forge-status-buffer-default-topic-filters topic-filter
+        forge-list-buffer-default-topic-filters topic-filter))
+
+  ;; Remove other sections from status buffer if desired
+  (remove-hook 'magit-status-sections-hook 'forge-insert-issues)
+  (remove-hook 'magit-status-sections-hook 'forge-insert-notifications)
+
+  ;; Customize PR format to show author and assignee
+  (setq forge-topic-list-columns
+        '(("#" 5 forge-topic-list-sort-by-number (:right-align t) number nil)
+          ("Title" 60 t nil title nil)
+          ("State" 6 t nil state nil)
+          ("Author" 15 t nil author nil)
+          ("Assignee" 15 t nil assignee nil)
+          ("Updated" 10 t nil updated nil))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; gptel
@@ -365,7 +433,7 @@
 (use-package gptel
   :config
   (define-key gptel-mode-map (kbd "C-c RET") 'gptel-menu)
-  (setq gptel-model 'gpt-4.1
+  (setq gptel-model 'claude-sonnet-4
         gptel-backend (gptel-make-gh-copilot "Copilot")))
 
 (gptel-make-ollama "local-llama"
