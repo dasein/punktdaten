@@ -24,8 +24,11 @@ prompt() {
     USRHOST="${YELLOW}\h${RESET}:"
   fi
 
-  # Set XTerm/tmux window title
-  local TITLEBAR="\[\e]0;\u@\h: \W \$(git-branch)\a\]"
+  # Set XTerm/tmux window title (omit in Emacs)
+  local TITLEBAR=""
+  if [[ -z "$EMACS" && -z "$INSIDE_EMACS" ]]; then
+    TITLEBAR="\[\e]0;\u@\h: \W \$(git-branch)\a\]"
+  fi
 
   # Actual prompt
   PS1="${TITLEBAR}${USRHOST}${BLUE}[\W]${GREEN}\$(git-branch)${RESET}\$ "
