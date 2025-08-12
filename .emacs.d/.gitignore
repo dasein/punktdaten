@@ -1,4 +1,10 @@
-*
-!.gitignore
-!init.el
-!early-init.el
+.**
+custom.el
+forge-**
+elpy/
+packages/
+projects
+recentf
+smex-items
+tramp
+transient/
