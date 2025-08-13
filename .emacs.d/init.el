@@ -479,6 +479,16 @@
   :system "Analyze the provided code for bugs, edge cases, or potential issues. Suggest fixes and explain the reasoning behind each problem identified."
   :temperature 0.3)
 
+;; Load agent tools for GPtel
+(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+(require 'agent-tools)
+
+;; Force registration of agent tools after gptel is loaded
+(when (featurep 'gptel)
+  (agent-tools-register-all))
+(with-eval-after-load 'gptel
+  (agent-tools-register-all))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Custom Macros
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
