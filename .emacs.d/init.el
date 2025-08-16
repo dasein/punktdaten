@@ -427,27 +427,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; gptel
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(global-set-key (kbd "C-c C-c") 'gptel)
-(global-set-key (kbd "C-c i") 'gptel-menu)
+(global-set-key (kbd "C-c c") 'gptel)
+(global-set-key (kbd "C-c i") 'gptel-send)
 
 (use-package gptel
   :config
   (define-key gptel-mode-map (kbd "C-c RET") 'gptel-menu)
   (setq gptel-model 'claude-sonnet-4
-        gptel-backend (gptel-make-gh-copilot "Copilot")))
+        gptel-backend (gptel-make-gh-copilot "Copilot"))
 
-(gptel-make-ollama "local-llama"
-  :host "hpfennig-dt.internal:11434"
-  :stream t
-  :models '("llama3.1:8b"))
+  (gptel-make-ollama "local-llama"
+    :host "hpfennig-dt.internal:11434"
+    :stream t
+    :models '("llama3.1:8b"))
 
-(gptel-make-ollama "local-mistral"
-  :host "hpfennig-dt.internal:11434"
-  :stream t
-  :models '("mistral:latest"))
+  (gptel-make-ollama "local-mistral"
+    :host "hpfennig-dt.internal:11434"
+    :stream t
+    :models '("mistral:latest"))
 
-(gptel-make-gh-copilot "Copilot")
-
+  (gptel-make-gh-copilot "Copilot"))
 
 ;; Preset prompts
 (gptel-make-preset 'c-refactor
