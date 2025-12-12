@@ -18,7 +18,7 @@ export LC_ALL=en_US.UTF-8
 
 # Editor
 if [ "$(which emacs > /dev/null; echo $?)" = 0 ]; then
-    export EDITOR="emacs -nw"
+    export EDITOR="ec"
     export CSCOPE_EDITOR='ec'
     alias emacs="emacs -nw"
 else
