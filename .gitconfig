@@ -1,6 +1,9 @@
 [includeIf "gitdir:~/work/"]
     path = ~/work/.gitconfig
 
+[advice]
+        skippedCherryPicks = false
+
 [user]
         #email is set on a per repo basis using [email-aliases] section
         name = "Herbert Pfennig"
