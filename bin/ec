@@ -1,2 +1,2 @@
 #!/bin/sh
-exec emacsclient -nw -a "emacs -nw" --no-wait $@
+exec emacsclient -nw -a "emacs -nw --no-desktop" --no-wait $@
