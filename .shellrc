@@ -140,3 +140,8 @@ ai-claude() {
 }
 
 source virtualenvwrapper.sh
+
+# Local extras (not checked in)
+if [ -f ~/.shell.extra ]; then
+    . ~/.shell.extra
+fi
