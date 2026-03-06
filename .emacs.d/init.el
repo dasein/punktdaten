@@ -32,23 +32,20 @@
    blacken
    counsel
    gptel
-   go-autocomplete
-   go-mode
-   go-eldoc
+   gptel-commit
+   gptel-magit
+   eat
    elpy
    flycheck
-   forge
    ivy
    magit
    forge
    flycheck
-   rego-mode
+   projectile
    swiper
-   smex
    tramp
    use-package
    virtualenv
-   yasnippet
    which-key
    zenburn-theme))
 
@@ -301,39 +298,6 @@
           (cons cmd (thing-at-point 'symbol)))))
     (funcall cmd)))
 
-(defun ivy-lookup-repos ()
-  (interactive)
-  (let* ((repos-dir (read-directory-name "Search repos in directory: " "~/work"))
-         (default-directory repos-dir)
-         (git-dirs (split-string
-                   (shell-command-to-string
-                    "find . -maxdepth 5 -name .git -type d -prune -print")
-                   "\n" t))
-         (repo-dirs (mapcar (lambda (git-dir)
-                             (file-name-directory git-dir))
-                           git-dirs)))
-    (if repo-dirs
-        (ivy-read "Select repository: " repo-dirs
-                  :action '(1
-                            ("o" (lambda (dir)
-                                   (let ((repo-path (expand-file-name dir repos-dir)))
-                                     (dired repo-path)
-                                     (magit-status repo-path)))
-                             "open dired and magit status")
-                            ("d" (lambda (dir)
-                                   (dired (expand-file-name dir repos-dir)))
-                             "open dired only")
-                            ("m" (lambda (dir)
-                                   (let ((repo-path (expand-file-name dir repos-dir)))
-                                     (magit-status repo-path)))
-                             "open magit status only")
-                            ("f" (lambda (dir)
-                                   (let ((repo-path (expand-file-name dir repos-dir)))
-                                     (counsel-find-file "" repo-path)))
-                             "find file in repository")))
-      (message "No git repositories found in %s" repos-dir))))
-
-
 ;;(setenv "FZF_DEFAULT_COMMAND" "ag --ignore .git/ -Ul")
 (setenv "FZF_DEFAULT_COMMAND" "rg --files --hidden --follow --glob '!.git'")
 
@@ -347,7 +311,6 @@
 (global-set-key (kbd "C-c k") 'relative-counsel-ag)
 (global-set-key (kbd "C-c j") 'counsel-lookup-point)
 (global-set-key (kbd "C-c l") 'gitroot-counsel-fzf)
-(global-set-key (kbd "C-c r") 'ivy-lookup-repos)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Python
@@ -367,18 +330,6 @@
 (add-hook 'elpy-mode-hook (lambda () (highlight-indentation-mode -1)))
 
 (setq python-shell-interpreter "ipython3")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Go
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'auto-complete)
-(require 'go-autocomplete)
-(require 'auto-complete-config)
-(require 'yasnippet)
-
-(add-hook 'go-mode-hook 'auto-complete-mode
-          (lambda ()
-            (ac-go-expand-arguments-into-snippets "yes")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; magit
@@ -425,15 +376,68 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; claude code
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(global-set-key (kbd "C-c c") (lambda () (interactive) (claude-code '(4))))
+(global-set-key (kbd "C-c c") 'claude-code-transient)
+
+;; install required inheritenv dependency:
+(use-package inheritenv
+  :vc (:url "https://github.com/purcell/inheritenv" :rev :newest))
+
+;; for vterm terminal backend:
+(use-package vterm :ensure t)
+
+;; Provide Bedrock environment variables from claude-login
+(defun claude-bedrock-environment (_buffer-name _directory)
+  "Get AWS Bedrock environment variables from claude-login.
+Requires a valid AWS profile configured via `claude-login' first."
+  (let* ((output (shell-command-to-string
+                  "claude-login --profile claude --model Claude-Opus-4.6 2>/dev/null"))
+         (env-vars '()))
+    (dolist (line (split-string output "\n"))
+      (when (string-match "^\\([A-Z_]+\\)='\\([^']*\\)';" line)
+        (push (format "%s=%s" (match-string 1 line) (match-string 2 line))
+              env-vars)))
+    (push "CLAUDE_CODE_MAX_OUTPUT_TOKENS=32000" env-vars)
+    (push "MAX_THINKING_TOKENS=8000" env-vars)
+    env-vars))
+
+;; install claude-code.el
+(use-package claude-code :ensure t
+  :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
+  :config
+  ;; optional IDE integration with Monet
+  (add-hook 'claude-code-process-environment-functions #'monet-start-server-function)
+  (add-hook 'claude-code-process-environment-functions #'claude-bedrock-environment)
+  (setq claude-code-terminal-backend 'eat)
+  (advice-add 'claude-code--start :around
+              (lambda (orig-fn arg extra-switches &optional force-prompt force-switch-to-buffer)
+                (funcall orig-fn arg extra-switches force-prompt t)))
+  (setq claude-code-vterm-buffer-multiline-output t)
+  (setq claude-code-vterm-multiline-delay 0.01)
+  (setq claude-code-no-delete-other-windows t)
+  (setq claude-code-toggle-auto-select t)
+  (setq claude-code-sandbox-program "claude-sandbox")
+  (setq monet-prefix-key nil)
+  (setopt vterm-min-window-width 40)
+  (monet-mode 1)
+  (define-key claude-code-command-map (kbd "l") monet-command-map)
+
+  ;; Optionally define a repeat map so that "M" will cycle thru Claude auto-accept/plan/confirm modes after invoking claude-code-cycle-mode / C-c M.
+  :bind
+  (:repeat-map my-cylaude-code-map ("M" . claude-code-cycle-mode)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; gptel
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(global-set-key (kbd "C-c c") 'gptel)
-(global-set-key (kbd "C-c i") 'gptel-send)
+(global-set-key (kbd "C-c t") 'gptel)
+(global-set-key (kbd "C-c C-t") 'gptel-send)
 
 (use-package gptel
   :config
   (define-key gptel-mode-map (kbd "C-c RET") 'gptel-menu)
-  (setq gptel-model 'claude-sonnet-4
+  (setq gptel-model 'gpt-5.2
         gptel-backend (gptel-make-gh-copilot "Copilot"))
 
   (gptel-make-ollama "local-llama"
@@ -447,6 +451,53 @@
     :models '("mistral:latest"))
 
   (gptel-make-gh-copilot "Copilot"))
+
+(setq gptel-commit-prompt
+      "You are an expert at writing Git commit messages. Generate **only** the commit message, nothing else.
+
+       Write a clear, concise conventional commit message using the following formatting rules and instructions.
+       Use present tense and imperative mood when writing any description or summaries. No signatures.
+
+       CRITICAL: OUTPUT PLAIN TEXT ONLY
+
+       DECISION PROCESS:
+       1. Count changed files
+       2. Determine JIRA_ID, if not use JIRA-0000 as placeholder
+       3. If 1 file: check if change is simple or complex
+          - Simple: one function, one clear fix/addition
+          - Complex: multiple functions, refactoring, or architectural change
+       4. Apply the appropriate format
+       5. Execute git commit with --no-verify flag to bypass pre-commit hooks
+       6. Do NOT add \"Generated with Claude Code\" footer
+       7. Do NOT add \"Co-Authored-By: Claude\" footer
+
+       FORMAT RULES:
+
+       1. Always create a subject line with the following format. Do NOT include \"JIRA_ID:\" if not relevant to project or instructed not to:
+
+       JIRA_ID: Subject line (≤72 chars, imperative mood, NO period)
+
+       2. Create the body of the commit message separated from the subject by a single new line:
+
+           a. Single File + Simple Change (one clear purpose):
+
+              * path/to/file: Description. (≤72 chars)
+
+           b. Single File + Complex Change (multiple purposes/major refactor):
+
+               Optional body paragraph explaining why (wrap at 72 chars).
+
+               * path/to/file (func1, func2): Description.
+
+           c. Multiple Files (2+ files changed):
+
+               Optional body paragraph explaining why (wrap at 72 chars).
+
+               * path/to/file1 (func1): Description.
+               * path/to/file2 (func2): Another description.
+
+           d. Trivial Changes: (Do not create a body for the commit message)
+       ")
 
 ;; Preset prompts
 (gptel-make-preset 'c-refactor
@@ -488,6 +539,20 @@
   (agent-tools-register-all))
 (with-eval-after-load 'gptel
   (agent-tools-register-all))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Projectile
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package projectile
+  :ensure t
+  :init
+  (projectile-mode +1)
+  (setq projectile-project-search-path '(("~/personal/") ("~/work" . 3))
+        projectile-auto-discover t
+        projectile-switch-project-action #'magit-status)
+  :bind
+  (:map projectile-mode-map
+        ("C-c p" . projectile-command-map)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Custom Macros
