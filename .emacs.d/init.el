@@ -38,6 +38,7 @@
    elpy
    flycheck
    ivy
+   ivy-prescient
    magit
    forge
    flycheck
@@ -276,6 +277,13 @@
 	;; allow input not in order
         '((t   . ivy--regex-ignore-order))))
 
+
+(use-package ivy-prescient
+  :after ivy
+  :config
+  (setq prescient-sort-full-matches-first t)
+  (ivy-prescient-mode 1)
+  (prescient-persist-mode 1))
 
 (defun counsel-lookup-point ()
   (interactive)
@@ -547,8 +555,10 @@ Requires a valid AWS profile configured via `claude-login' first."
   :ensure t
   :init
   (projectile-mode +1)
-  (setq projectile-project-search-path '(("~/personal/") ("~/work" . 3))
+  (setq projectile-project-search-path '(("~/personal/") ("~/work" . 3) ("~/external/" .  3) ("~/gt/" . 3))
         projectile-auto-discover t
+        projectile-completion-system 'ivy
+        projectile-sort-order 'recently-active
         projectile-switch-project-action #'magit-status)
   :bind
   (:map projectile-mode-map
