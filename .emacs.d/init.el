@@ -415,22 +415,14 @@ Requires a valid AWS profile configured via `claude-login' first."
 (use-package claude-code :ensure t
   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
   :config
-  ;; optional IDE integration with Monet
-  (add-hook 'claude-code-process-environment-functions #'monet-start-server-function)
   (add-hook 'claude-code-process-environment-functions #'claude-bedrock-environment)
   (setq claude-code-terminal-backend 'eat)
   (advice-add 'claude-code--start :around
               (lambda (orig-fn arg extra-switches &optional force-prompt force-switch-to-buffer)
                 (funcall orig-fn arg extra-switches force-prompt t)))
-  (setq claude-code-vterm-buffer-multiline-output t)
-  (setq claude-code-vterm-multiline-delay 0.01)
   (setq claude-code-no-delete-other-windows t)
   (setq claude-code-toggle-auto-select t)
   (setq claude-code-sandbox-program "claude-sandbox")
-  (setq monet-prefix-key nil)
-  (setopt vterm-min-window-width 40)
-  (monet-mode 1)
-  (define-key claude-code-command-map (kbd "l") monet-command-map)
 
   ;; Optionally define a repeat map so that "M" will cycle thru Claude auto-accept/plan/confirm modes after invoking claude-code-cycle-mode / C-c M.
   :bind
