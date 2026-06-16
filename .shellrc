@@ -128,17 +128,6 @@ starttransfer:  %{time_starttransfer}s\n\
         total:  %{time_total}s\n" "$@"
 }
 
-ai-login() {
-    claude-login --model Claude-Opus-4.6 | aws-prof claude
-}
-
-ai-claude() {
-    eval $(claude-login --model Claude-Opus-4.6 --profile claude)
-    export CLAUDE_CODE_MAX_OUTPUT_TOKENS=32000
-    export MAX_THINKING_TOKENS=8000
-    claude
-}
-
 source virtualenvwrapper.sh
 
 # Local extras (not checked in)

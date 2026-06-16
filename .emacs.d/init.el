@@ -347,7 +347,11 @@
   (setq magit-define-global-key-bindings 'recommended)
   (setq magit-push-current-set-remote-if-missing nil)
   (setq magit-branch-pull-margin nil)
-  (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+  (setq magit-display-buffer-function #'magit-display-buffer-fullcolumn-most-v1)
+  (magit-add-section-hook 'magit-status-sections-hook
+                          'magit-insert-worktrees
+                          'magit-insert-stashes
+                          'append))
 
 (use-package forge
   :after magit
@@ -384,6 +388,48 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ediff
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq ediff-window-setup-function #'ediff-setup-windows-plain)
+(setq ediff-split-window-function #'split-window-horizontally)
+
+
+;; Focus the ediff control buffer so keybindings work immediately
+(add-hook 'ediff-startup-hook
+          (lambda () (select-window (get-buffer-window ediff-control-buffer))))
+
+;; Disable ediff's own merge-save prompt; magit and our hooks handle saving
+(setq ediff-autostore-merges nil)
+
+;; Kill leftover ediff buffers on quit
+(defun ediff-kill-leftover-buffers ()
+  (dolist (buf (buffer-list))
+    (when (string-match-p "\\*[Ee]diff" (buffer-name buf))
+      (kill-buffer buf))))
+(add-hook 'ediff-quit-hook #'ediff-kill-leftover-buffers 90)
+(add-hook 'magit-ediff-quit-hook #'ediff-kill-leftover-buffers 90)
+
+;; For magit-spawned ediff: auto-accept the "Conflict resolution finished; save?" prompt
+(advice-add 'y-or-n-p :around
+            (lambda (orig-fn prompt &rest args)
+              (if (string-prefix-p "Conflict resolution finished" prompt)
+                  t
+                (apply orig-fn prompt args))))
+
+;; a/b to copy region to merge buffer, c to copy both
+(defun ediff-copy-both-to-C ()
+  (interactive)
+  (ediff-copy-diff ediff-current-difference nil 'C nil
+                   (concat
+                    (ediff-get-region-contents ediff-current-difference 'A ediff-control-buffer)
+                    (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))
+(add-hook 'ediff-keymap-setup-hook
+          (lambda ()
+            (define-key ediff-mode-map "a" 'ediff-copy-A-to-C)
+            (define-key ediff-mode-map "b" 'ediff-copy-B-to-C)
+            (define-key ediff-mode-map "c" 'ediff-copy-both-to-C)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; claude code
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(global-set-key (kbd "C-c c") (lambda () (interactive) (claude-code '(4))))
@@ -396,37 +442,30 @@
 ;; for vterm terminal backend:
 (use-package vterm :ensure t)
 
-;; Provide Bedrock environment variables from claude-login
-(defun claude-bedrock-environment (_buffer-name _directory)
-  "Get AWS Bedrock environment variables from claude-login.
-Requires a valid AWS profile configured via `claude-login' first."
-  (let* ((output (shell-command-to-string
-                  "claude-login --profile claude --model Claude-Opus-4.6 2>/dev/null"))
-         (env-vars '()))
-    (dolist (line (split-string output "\n"))
-      (when (string-match "^\\([A-Z_]+\\)='\\([^']*\\)';" line)
-        (push (format "%s=%s" (match-string 1 line) (match-string 2 line))
-              env-vars)))
-    (push "CLAUDE_CODE_MAX_OUTPUT_TOKENS=32000" env-vars)
-    (push "MAX_THINKING_TOKENS=8000" env-vars)
-    env-vars))
-
 ;; install claude-code.el
 (use-package claude-code :ensure t
   :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
   :config
-  (add-hook 'claude-code-process-environment-functions #'claude-bedrock-environment)
   (setq claude-code-terminal-backend 'eat)
   (advice-add 'claude-code--start :around
               (lambda (orig-fn arg extra-switches &optional force-prompt force-switch-to-buffer)
                 (funcall orig-fn arg extra-switches force-prompt t)))
-  (setq claude-code-no-delete-other-windows t)
+  ;; (setq claude-code-no-delete-other-windows t)
   (setq claude-code-toggle-auto-select t)
   (setq claude-code-sandbox-program "claude-sandbox")
 
   ;; Optionally define a repeat map so that "M" will cycle thru Claude auto-accept/plan/confirm modes after invoking claude-code-cycle-mode / C-c M.
   :bind
   (:repeat-map my-cylaude-code-map ("M" . claude-code-cycle-mode)))
+
+(defun my/claude-tmux ()
+  "Open a new tmux window running Claude for the current project.
+Uses the tmux session running in the background; switch to it via C-t u."
+  (interactive)
+  (let ((root (expand-file-name (or (projectile-project-root) default-directory))))
+    (shell-command
+     (format "launch-claude.sh %s" (shell-quote-argument root)))
+    (message "Claude window opened for %s — switch to tmux (C-t u)" root)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; gptel

@@ -1,18 +1,17 @@
-[includeIf "gitdir:~/work/"]
+[user]
+        name = "Herbert Pfennig"
+        email = "dasein555@gmail.com"
+
+# Overrides per project categories
+[includeIf "gitdir:/Volumes/work-case-sensitive/work/"]
     path = ~/work/.gitconfig
+[includeIf "gitdir:/Volumes/work-case-sensitive/personal/"]
+    path = ~/personal/.gitconfig
+[includeIf "gitdir:/Volumes/work-case-sensitive/external/"]
+    path = ~/external/.gitconfig
 
 [advice]
         skippedCherryPicks = false
-
-[user]
-        #email is set on a per repo basis using [email-aliases] section
-        name = "Herbert Pfennig"
-        email = "h@none"
-
-[email-aliases]
-        # Used by the set_user_email() pre-commit hook
-        w = hpfennig@splunk.com
-        p = dasein555@gmail.com
 
 [branch]
         autosetuprebase = always
@@ -45,8 +44,9 @@
         lg = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%an>' --date=short
         lgm = log --pretty=format:'%C(red)%ad %C(yellow)%h %C(green)%d %Creset%s %C(bold blue)<%cn>' --date=short --merges
         find-merge = "!sh -c 'commit=$0 && branch=${1:-HEAD} && git rev-list $commit..$branch --ancestry-path --first-parent) | tail -1'"
-        merged = "!sh -c 'git branch -r --merged $0/$1 | grep -v $1 | grep $0 | cut -d/ -f2-'"
-        cruft = "!f() { for b in $(git branch -r); do if [ -z \"$(git log -1 --since=\"12 month ago\" -s $b --)\" ]; then echo $b; fi; done }; f"
+        cruft = "!f() { t=${1:-main}; echo '== Local =='; git branch --merged $t | grep -v '\\*\\|main\\|master'; echo '== Remote =='; git branch -r --merged $t | grep -v '\\->\\|/main$\\|/master$\\|/HEAD'; }; f"
+        cleanup = "!git branch --merged ${1:-main} | grep -v '\\*\\|main\\|master' | xargs -n 1 git branch -d #"
+        cleanup-remote = "!f() { t=${1:-main}; git branch -r --merged $t | grep -v '\\->\\|/main$\\|/master$\\|/HEAD' | sed 's|origin/||' | xargs -n 1 git push origin --delete; }; f"
         fixup = !sh -c 'git commit -m \"fixup! $(git log -1 --format='\\''%s'\\'' $@)\"' -
         root = !pwd
         pp = push --force-with-lease
@@ -88,29 +88,9 @@
         textconv = tcpdump -qns 0 -X -r
 
 [merge]
-        tool = ediff
         conflictstyle = diff3
         renamelimit = 5000
 
-[mergetool "ediff"]
-        cmd = emacs -nw --eval \" \
-(progn\
-  (defun ediff-write-merge-buffer ()\
-    (let ((file ediff-merge-store-file))\
-      (set-buffer ediff-buffer-C)\
-      (write-region (point-min) (point-max) file)\
-      (message \\\"Merge buffer saved in: %s\\\" file)\
-      (set-buffer-modified-p nil)\
-      (sit-for 1)))\
-  (defun ediff-copy-both-to-C ()\
-    (interactive)\
-    (ediff-copy-diff ediff-current-difference nil 'C nil\
-                     (concat\
-                     (ediff-get-region-contents ediff-current-difference 'A ediff-control-buffer)\
-                     (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))\
-  (defun add-d-to-ediff-mode-map () (define-key ediff-mode-map \"d\" 'ediff-copy-both-to-C))\
-  (add-hook 'ediff-keymap-setup-hook 'add-d-to-ediff-mode-map)\
-  (setq ediff-quit-hook 'kill-emacs\
-        ediff-quit-merge-hook 'ediff-write-merge-buffer)\
-  (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\"\
-                                   \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
+
+[url "ssh://git@cd.splunkdev.com"]
+    insteadOf = https://cd.splunkdev.com

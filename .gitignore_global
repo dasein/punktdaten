@@ -36,3 +36,5 @@ nosetests.xml
 
 # AI
 .aider*
+
+**/.claude/settings.local.json
