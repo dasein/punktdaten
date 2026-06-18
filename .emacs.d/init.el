@@ -462,10 +462,18 @@
   "Open a new tmux window running Claude for the current project.
 Uses the tmux session running in the background; switch to it via C-t u."
   (interactive)
-  (let ((root (expand-file-name (or (projectile-project-root) default-directory))))
+  (let* ((root (expand-file-name (or (projectile-project-root) default-directory)))
+         (base (file-name-nondirectory (directory-file-name root)))
+         (existing (split-string (shell-command-to-string "tmux list-windows -F '#{window_name}'" ) "\n" t))
+         (name (if (member base existing)
+                   (let ((suffix (read-string (format "Window '%s' exists. Suffix (blank for default): " base))))
+                     (if (string-empty-p suffix) base (format "%s:%s" base suffix)))
+                 base)))
     (shell-command
-     (format "launch-claude.sh %s" (shell-quote-argument root)))
-    (message "Claude window opened for %s — switch to tmux (C-t u)" root)))
+     (format "launch-claude.sh %s %s" (shell-quote-argument root) (shell-quote-argument name)))
+    (message "Claude window '%s' opened — switch to tmux (C-t u)" name)))
+
+(global-set-key (kbd "C-c C") 'my/claude-tmux)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; gptel
