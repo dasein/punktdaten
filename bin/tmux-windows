@@ -25,6 +25,72 @@ set_state() {
   fi
 }
 
+# True if a pane's current command names a Claude process. Claude's native
+# installer runs a versioned binary and tmux reports that bare semver
+# (e.g. 2.1.197) as the command instead of "claude" (anthropics/claude-code#49852).
+is_claude() {
+  local cmd="$1"
+  case "$cmd" in
+    claude|claude-code) return 0 ;;
+  esac
+  [[ "$cmd" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+# Detect Claude's state for a pane by reading its OSC title and recent screen
+# text, passively (no hooks): braille spinner prefix on the title means
+# working; a selection menu (cursor resting on a numbered option, or the
+# "enter to select"/"esc to cancel" phrase pair) means waiting; otherwise idle.
+detect_claude_state() {
+  local pane_id="$1"
+  local title recent
+  title=$(tmux display-message -pt "$pane_id" '#{pane_title}')
+  recent=$(tmux capture-pane -pJ -t "$pane_id" -S -25 2>/dev/null)
+
+  local LC_ALL=C
+  case "$title" in
+    $'\xe2\xa0'*|$'\xe2\xa1'*|$'\xe2\xa2'*|$'\xe2\xa3'*) printf 'working'; return ;;
+  esac
+
+  if has_selection_prompt "$recent"; then
+    printf 'waiting'; return
+  fi
+  local recent_lower
+  recent_lower=$(printf '%s' "$recent" | tr '[:upper:]' '[:lower:]')
+  if [[ "$recent_lower" == *"enter to select"* && "$recent_lower" == *"esc to cancel"* ]]; then
+    printf 'waiting'; return
+  fi
+
+  printf 'idle'
+}
+
+# True if the recent screen text shows a Claude selection menu: the cursor
+# (❯) rests on a numbered option AND at least one other numbered option is
+# present. Requiring a second option distinguishes a real menu from the bare
+# ❯ input box. Leading whitespace and box-drawing borders are stripped so it
+# matches Claude's bordered rendering too.
+has_selection_prompt() {
+  local text="$1"
+  local cursor_on_option=0 option_lines=0
+  local line stripped rest
+  while IFS= read -r line; do
+    stripped="${line#"${line%%[![:space:]│┃║╎┆┊|]*}"}"
+    if [[ "$stripped" == $'❯'* ]]; then
+      rest="${stripped#$'❯'}"
+      rest="${rest# }"
+      has_cursor=1
+    else
+      rest="$stripped"
+      has_cursor=0
+    fi
+    local option_re='^[0-9]+[.)]'
+    if [[ "$rest" =~ $option_re ]]; then
+      option_lines=$((option_lines + 1))
+      [[ "$has_cursor" == 1 ]] && cursor_on_option=1
+    fi
+  done <<< "$text"
+  [[ "$cursor_on_option" == 1 && "$option_lines" -ge 2 ]]
+}
+
 # Resolve effective state for a window.
 # Windows with @window_state set use that value; if claude exited (pane reverted
 # to shell) treat as idle. Windows without @window_state fall back to
