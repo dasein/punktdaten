@@ -173,22 +173,19 @@ run_daemon() {
   done
 }
 
-# Resolve effective state for a window.
-# Windows with @window_state set use that value; if claude exited (pane reverted
-# to shell) treat as idle. Windows without @window_state fall back to
-# pane_current_command: shell = idle, anything else = working.
+# Resolve effective state for a window: idle for a shell (including a Claude
+# pane that has exited back to one), the daemon-maintained @window_state for
+# a live Claude pane, or empty for anything else we have no real detection
+# for — an unrecognized command is left untracked rather than assumed "working".
 resolve_state() {
   local window_state="$1" cmd="$2"
-  if [ -n "$window_state" ]; then
-    case "$cmd" in
-      bash|zsh|sh|fish|'') printf 'idle' ;;
-      *)                   printf '%s' "$window_state" ;;
-    esac
-    return
-  fi
   case "$cmd" in
-    bash|zsh|sh|fish|claude|'') printf 'idle' ;;
-    *)                          printf 'working' ;;
+    bash|zsh|sh|fish|'') printf 'idle' ;;
+    *)
+      if is_claude "$cmd"; then
+        printf '%s' "${window_state:-idle}"
+      fi
+      ;;
   esac
 }
 
@@ -202,7 +199,8 @@ emit_rows() {
       case "$state" in
         waiting) icon=$'\033[31m●\033[0m waiting' rank=0 ;;
         working) icon=$'\033[33m●\033[0m working' rank=1 ;;
-        *)       icon=$'\033[32m●\033[0m idle   ' rank=2 ;;
+        idle)    icon=$'\033[32m●\033[0m idle   ' rank=2 ;;
+        *)       icon='         '                rank=3 ;;
       esac
       if [ -n "$at" ]; then ago="$(( (now - at) / 60 ))m"; else ago=''; fi
       printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$rank" "$target" "$icon" "$name" "${path/#$HOME/~}" "$ago"
