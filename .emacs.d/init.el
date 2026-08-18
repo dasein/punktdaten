@@ -348,6 +348,7 @@
   (setq magit-push-current-set-remote-if-missing nil)
   (setq magit-branch-pull-margin nil)
   (setq magit-display-buffer-function #'magit-display-buffer-fullcolumn-most-v1)
+  (setq magit-bury-buffer-function 'quit-window)
   (magit-add-section-hook 'magit-status-sections-hook
                           'magit-insert-worktrees
                           'magit-insert-stashes
