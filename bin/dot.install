@@ -8,8 +8,29 @@ cd "$root" || exit
 
 git submodule update --init
 
-dotfiles=$(find . -mindepth 1 -maxdepth 1  -iname ".*" ! -name .git -exec basename {} \;)
-binfiles=$(find ./bin -mindepth 1 -maxdepth 1 -exec basename {} \;)
+# Link a single item from the repo into a target directory.
+# Replaces existing symlinks. Refuses to touch real files/dirs.
+link_into() {
+    local target_dir="$1"
+    local src="$2"
+    local name
+    name=$(basename "$src")
+    local dest="$target_dir/$name"
+
+    if [ -e "$dest" ] && [ ! -h "$dest" ]; then
+        echo "ERROR: $dest is real and exists, skipping"
+        return
+    fi
+    ln -fs "$src" "$target_dir"
+    echo "Linked: $dest"
+}
+
+# Top-level dotfiles — exclude dirs managed file-by-file below
+dotfiles=$(find . -mindepth 1 -maxdepth 1 -iname ".*" \
+    ! -name .git \
+    ! -name .claude \
+    ! -name .codex \
+    -exec basename {} \;)
 
 for dot in $dotfiles; do
     if [ ! -e "$HOME/$dot" ] || [ -h "$HOME/$dot" ]; then
@@ -20,7 +41,9 @@ for dot in $dotfiles; do
     fi
 done
 
+# ~/bin
 mkdir -p "$HOME/bin"
+binfiles=$(find ./bin -mindepth 1 -maxdepth 1 -exec basename {} \;)
 for b in $binfiles; do
     if [ ! -e "$HOME/bin/$b" ] || [ -h "$HOME/bin/$b" ]; then
         ln -fs "$root/bin/$b" "$HOME/bin"
@@ -28,4 +51,27 @@ for b in $binfiles; do
     else
         echo "ERROR: $HOME/bin/$b is real and exists"
     fi
+done
+
+# ~/.claude — link individual tracked files; never touch settings.local.json
+mkdir -p "$HOME/.claude/commands" "$HOME/.claude/skills"
+for f in "$root/.claude/"*; do
+    name=$(basename "$f")
+    [ "$name" = "commands" ] && continue
+    [ "$name" = "skills" ] && continue
+    link_into "$HOME/.claude" "$f"
+done
+for f in "$root/.claude/commands/"*; do
+    link_into "$HOME/.claude/commands" "$f"
+done
+for f in "$root/.claude/skills/"*; do
+    link_into "$HOME/.claude/skills" "$f"
+done
+
+# ~/.codex — link config.toml; share commands and skills from ~/.claude
+# prompts -> ~/.claude/commands is already a symlink created by codex; leave it
+mkdir -p "$HOME/.codex/skills"
+link_into "$HOME/.codex" "$root/.codex/config.toml"
+for f in "$root/.claude/skills/"*; do
+    link_into "$HOME/.codex/skills" "$f"
 done
