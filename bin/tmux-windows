@@ -124,11 +124,15 @@ claim_daemon() {
 # transition into "waiting".
 poll_agent_state_once() {
   local -A live=()
-  local window_id pane_id cmd raw prev
-  while IFS='|' read -r window_id pane_id cmd; do
+  local window_id pane_id cmd active attached raw prev
+  while IFS='|' read -r window_id pane_id cmd active attached; do
     [ -z "$window_id" ] && continue
     is_claude "$cmd" || continue
     live[$window_id]=1
+
+    if [ "$active" = '1' ] && [ "$attached" = '1' ]; then
+      tmux set-option -wt "$window_id" @window_seen 1
+    fi
 
     if [ -z "${DAEMON_COMMITTED[$window_id]+x}" ]; then
       DAEMON_COMMITTED[$window_id]=$(tmux show-options -qvw -t "$window_id" @window_state 2>/dev/null)
@@ -154,8 +158,11 @@ poll_agent_state_once() {
       DAEMON_COMMITTED[$window_id]="$raw"
       DAEMON_COUNT[$window_id]=0
       set_window_state "$window_id" "$raw"
+      if [ "$raw" = 'idle' ] && [ "$prev" != 'idle' ] && { [ "$active" != '1' ] || [ "$attached" != '1' ]; }; then
+        tmux set-option -wt "$window_id" @window_seen 0
+      fi
     fi
-  done < <(tmux list-windows -a -F '#{window_id}|#{pane_id}|#{pane_current_command}')
+  done < <(tmux list-windows -a -F '#{window_id}|#{pane_id}|#{pane_current_command}|#{window_active}|#{session_attached}')
 
   local wid
   for wid in "${!DAEMON_COMMITTED[@]}"; do
@@ -189,23 +196,50 @@ resolve_state() {
   esac
 }
 
+NAME_WIDTH=30
+
+# Pad or truncate a window name to a fixed display width so the picker's
+# name column lines up regardless of how long the name is.
+format_name() {
+  local name="$1"
+  if [ "${#name}" -gt "$NAME_WIDTH" ]; then
+    printf '%s…' "${name:0:$((NAME_WIDTH - 1))}"
+  else
+    printf '%s%*s' "$name" "$((NAME_WIDTH - ${#name}))" ''
+  fi
+}
+
 emit_rows() {
   local now
   now=$(date +%s)
-  tmux list-windows -a -F '#{session_name}:#{window_index}|#{window_name}|#{pane_current_path}|#{@window_state}|#{pane_current_command}' \
-  | while IFS='|' read -r target name path window_state cmd; do
+  tmux list-windows -a -F '#{session_name}:#{window_index}|#{window_index}|#{window_name}|#{pane_current_path}|#{@window_state}|#{pane_current_command}|#{@window_seen}' \
+  | while IFS='|' read -r target index name path window_state cmd seen; do
       state=$(resolve_state "$window_state" "$cmd")
       at=$(tmux show-options -qvw -t "$target" @window_state_at 2>/dev/null)
       case "$state" in
-        waiting) icon=$'\033[31m●\033[0m waiting' rank=0 ;;
-        working) icon=$'\033[33m●\033[0m working' rank=1 ;;
-        idle)    icon=$'\033[32m●\033[0m idle   ' rank=2 ;;
-        *)       icon='         '                rank=3 ;;
+        waiting) icon=$'\033[31m●\033[0m' label='waiting' ;;
+        working) icon=$'\033[33m●\033[0m' label='working' ;;
+        idle)    if [ "$seen" = '0' ]; then icon=$'\033[36m●\033[0m'; label='idle/unseen'; else icon=$'\033[32m✓\033[0m'; label='idle/seen'; fi ;;
+        *)       icon=' '                  label=''         ;;
       esac
       if [ -n "$at" ]; then ago="$(( (now - at) / 60 ))m"; else ago=''; fi
-      printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$rank" "$target" "$icon" "$name" "${path/#$HOME/~}" "$ago"
-    done \
-  | sort -n
+      display=$(printf '%2s  %s  %s' "$index" "$icon" "$(format_name "$name")")
+      printf '%s\t%s\t%s\t%s\t%s\n' "$target" "$display" "${path/#$HOME/~}" "$ago" "$label"
+    done
+}
+
+# Preview pane content for the picker: full path (and last-update age, if
+# any) as a header, followed by just enough of the tail of the window's live
+# pane content to fill fzf's preview pane, so it always shows the tail
+# without needing to scroll.
+preview_pane() {
+  local target="$1" path="$2" ago="$3"
+  if [ -n "$ago" ]; then
+    printf '%s · updated %s ago\n\n' "$path" "$ago"
+  else
+    printf '%s\n\n' "$path"
+  fi
+  tmux capture-pane -ept "$target" | tail -n "$(( ${FZF_PREVIEW_LINES:-27} - 2 ))"
 }
 
 status_dots() {
@@ -227,19 +261,21 @@ status_dots() {
 }
 
 case "${1:-}" in
-  --status)    status_dots;    exit 0 ;;
-  --rows)      emit_rows;      exit 0 ;;
-  --set-state) set_state "$2"; exit 0 ;;
-  --daemon)    claim_daemon && run_daemon; exit 0 ;;
+  --status)       status_dots;    exit 0 ;;
+  --rows)         emit_rows;      exit 0 ;;
+  --set-state)    set_state "$2"; exit 0 ;;
+  --daemon)       claim_daemon && run_daemon; exit 0 ;;
+  --preview)      preview_pane "$2" "$3" "$4"; exit 0 ;;
 esac
 
-sel=$(emit_rows | fzf --ansi --delimiter=$'\t' --with-nth=3,4,5,6 \
+sel=$(emit_rows | fzf --ansi --delimiter=$'\t' --with-nth=2 --nth=2,5 \
   --reverse --cycle \
-  --header='windows · enter: jump · ctrl-x: kill' \
-  --preview='tmux capture-pane -ept {2}' \
-  --preview-window='right,62%,wrap' \
-  --bind="ctrl-x:execute-silent(tmux kill-window -t {2})+reload($SELF --rows)")
+  --header=$'\033[31m●\033[0m waiting  \033[33m●\033[0m working  \033[32m✓\033[0m idle/seen  \033[36m●\033[0m idle/unseen' \
+  --footer='enter: jump · ctrl-x: kill' \
+  --preview="$SELF --preview {1} {3} {4}" \
+  --preview-window='down,80%,wrap' \
+  --bind="ctrl-x:execute-silent(tmux kill-window -t {1})+reload($SELF --rows)")
 
 [ -z "$sel" ] && exit 0
-target=$(printf '%s' "$sel" | cut -f2)
+target=$(printf '%s' "$sel" | cut -f1)
 tmux switch-client -t "$target"
