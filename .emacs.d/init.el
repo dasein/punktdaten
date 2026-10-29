@@ -3,6 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun custom-autoload (&rest args))
 ;; Define the load-path
+(make-directory "~/.emacs.d/lisp/" t)
 (let ((default-directory "~/.emacs.d/lisp/"))
       (normal-top-level-add-to-load-path '("."))
       (normal-top-level-add-subdirs-to-load-path))
@@ -34,7 +35,6 @@
    gptel
    gptel-commit
    gptel-magit
-   eat
    elpy
    flycheck
    ivy
@@ -431,34 +431,8 @@
             (define-key ediff-mode-map "c" 'ediff-copy-both-to-C)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; claude code
+;; agents
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;(global-set-key (kbd "C-c c") (lambda () (interactive) (claude-code '(4))))
-(global-set-key (kbd "C-c c") 'claude-code-transient)
-
-;; install required inheritenv dependency:
-(use-package inheritenv
-  :vc (:url "https://github.com/purcell/inheritenv" :rev :newest))
-
-;; for vterm terminal backend:
-(use-package vterm :ensure t)
-
-;; install claude-code.el
-(use-package claude-code :ensure t
-  :vc (:url "https://github.com/stevemolitor/claude-code.el" :rev :newest)
-  :config
-  (setq claude-code-terminal-backend 'eat)
-  (advice-add 'claude-code--start :around
-              (lambda (orig-fn arg extra-switches &optional force-prompt force-switch-to-buffer)
-                (funcall orig-fn arg extra-switches force-prompt t)))
-  ;; (setq claude-code-no-delete-other-windows t)
-  (setq claude-code-toggle-auto-select t)
-  (setq claude-code-sandbox-program "claude-sandbox")
-
-  ;; Optionally define a repeat map so that "M" will cycle thru Claude auto-accept/plan/confirm modes after invoking claude-code-cycle-mode / C-c M.
-  :bind
-  (:repeat-map my-cylaude-code-map ("M" . claude-code-cycle-mode)))
-
 (defun my/agent-tmux (agent)
   "Open a new tmux window running AGENT (\"claude\" or \"codex\") for the current project.
 Uses the tmux session running in the background; switch to it via C-t u."
@@ -587,16 +561,6 @@ Uses the tmux session running in the background; switch to it via C-t u."
   :description "Debug problematic code"
   :system "Analyze the provided code for bugs, edge cases, or potential issues. Suggest fixes and explain the reasoning behind each problem identified."
   :temperature 0.3)
-
-;; Load agent tools for GPtel
-(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
-(require 'agent-tools)
-
-;; Force registration of agent tools after gptel is loaded
-(when (featurep 'gptel)
-  (agent-tools-register-all))
-(with-eval-after-load 'gptel
-  (agent-tools-register-all))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Projectile
