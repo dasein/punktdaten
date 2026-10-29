@@ -20,9 +20,10 @@ wrapping, no shims. This RFC ports its detection approach into
 generalizes the status resolver so it doesn't silently assume every
 non-shell pane is "working".
 
-Scope: Claude only (we don't run codex/opencode today). The detection
-functions are written so another agent could be added later without a
-rewrite, but no other agent is implemented now (YAGNI).
+Scope: Claude and Codex. Codex is detected from its OSC pane title alone
+(`detect_codex_state`): a braille spinner prefix means working, and
+"Action Required" (set for approval prompts) means waiting. OpenCode is not
+implemented (YAGNI).
 
 ## Design
 
@@ -107,7 +108,7 @@ detected:
 
 ## Out of scope
 
-- Codex/OpenCode detection (no current usage).
+- OpenCode detection (no current usage).
 - A docked/always-visible sidebar (the fzf popup dock+preview layout stays;
   only the status semantics change, not the popup mechanics).
 - Process-tree fallback for detecting an agent's foreground subprocess.

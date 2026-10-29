@@ -49,6 +49,48 @@ is_claude() {
   [[ "$cmd" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
 }
 
+is_codex() {
+  [ "$1" = codex ]
+}
+
+is_agent() {
+  is_claude "$1" || is_codex "$1"
+}
+
+# True if an OSC pane title starts with a braille spinner glyph, which both
+# Claude and Codex set while a turn is running.
+title_has_spinner() {
+  local LC_ALL=C
+  case "$1" in
+    $'\xe2\xa0'*|$'\xe2\xa1'*|$'\xe2\xa2'*|$'\xe2\xa3'*) return 0 ;;
+  esac
+  return 1
+}
+
+# Detect Codex's state for a pane from its OSC title alone: a braille spinner
+# prefix means working; "Action Required" (shown for approval prompts) means
+# waiting; otherwise idle.
+detect_codex_state() {
+  local title
+  title=$(tmux display-message -pt "$1" '#{pane_title}')
+  if title_has_spinner "$title"; then
+    printf 'working'
+  elif [[ "$title" == *"Action Required"* ]]; then
+    printf 'waiting'
+  else
+    printf 'idle'
+  fi
+}
+
+detect_state() {
+  local pane_id="$1" cmd="$2"
+  if is_codex "$cmd"; then
+    detect_codex_state "$pane_id"
+  else
+    detect_claude_state "$pane_id"
+  fi
+}
+
 # Detect Claude's state for a pane by reading its OSC title and recent screen
 # text, passively (no hooks): braille spinner prefix on the title means
 # working; a selection menu (cursor resting on a numbered option, or the
@@ -60,9 +102,9 @@ detect_claude_state() {
   recent=$(tmux capture-pane -pJ -t "$pane_id" -S -25 2>/dev/null)
 
   local LC_ALL=C
-  case "$title" in
-    $'\xe2\xa0'*|$'\xe2\xa1'*|$'\xe2\xa2'*|$'\xe2\xa3'*) printf 'working'; return ;;
-  esac
+  if title_has_spinner "$title"; then
+    printf 'working'; return
+  fi
 
   if has_selection_prompt "$recent"; then
     printf 'waiting'; return
@@ -127,7 +169,7 @@ poll_agent_state_once() {
   local window_id pane_id cmd active attached raw prev
   while IFS='|' read -r window_id pane_id cmd active attached; do
     [ -z "$window_id" ] && continue
-    is_claude "$cmd" || continue
+    is_agent "$cmd" || continue
     live[$window_id]=1
 
     if [ "$active" = '1' ] && [ "$attached" = '1' ]; then
@@ -139,7 +181,7 @@ poll_agent_state_once() {
       [ -z "${DAEMON_COMMITTED[$window_id]}" ] && DAEMON_COMMITTED[$window_id]='idle'
     fi
     prev="${DAEMON_COMMITTED[$window_id]}"
-    raw=$(detect_claude_state "$pane_id")
+    raw=$(detect_state "$pane_id" "$cmd")
 
     if [ "$raw" = "$prev" ]; then
       DAEMON_CANDIDATE[$window_id]="$raw"
@@ -180,16 +222,17 @@ run_daemon() {
   done
 }
 
-# Resolve effective state for a window: idle for a shell (including a Claude
+# Resolve effective state for a window: idle for a shell (including an agent
 # pane that has exited back to one), the daemon-maintained @window_state for
-# a live Claude pane, or empty for anything else we have no real detection
-# for — an unrecognized command is left untracked rather than assumed "working".
+# a live Claude or Codex pane, or empty for anything else we have no real
+# detection for — an unrecognized command is left untracked rather than
+# assumed "working".
 resolve_state() {
   local window_state="$1" cmd="$2"
   case "$cmd" in
     bash|zsh|sh|fish|'') printf 'idle' ;;
     *)
-      if is_claude "$cmd"; then
+      if is_agent "$cmd"; then
         printf '%s' "${window_state:-idle}"
       fi
       ;;

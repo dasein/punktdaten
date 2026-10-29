@@ -459,10 +459,9 @@
   :bind
   (:repeat-map my-cylaude-code-map ("M" . claude-code-cycle-mode)))
 
-(defun my/claude-tmux ()
-  "Open a new tmux window running Claude for the current project.
+(defun my/agent-tmux (agent)
+  "Open a new tmux window running AGENT (\"claude\" or \"codex\") for the current project.
 Uses the tmux session running in the background; switch to it via C-t u."
-  (interactive)
   (let* ((root (expand-file-name (or (projectile-project-root) default-directory)))
          (base (file-name-nondirectory (directory-file-name root)))
          (existing (split-string (shell-command-to-string "tmux list-windows -F '#{window_name}'" ) "\n" t))
@@ -471,10 +470,21 @@ Uses the tmux session running in the background; switch to it via C-t u."
                      (if (string-empty-p suffix) base (format "%s:%s" base suffix)))
                  base)))
     (shell-command
-     (format "launch-claude.sh %s %s" (shell-quote-argument root) (shell-quote-argument name)))
-    (message "Claude window '%s' opened — switch to tmux (C-t u)" name)))
+     (format "launch-agent.sh %s %s %s" agent (shell-quote-argument root) (shell-quote-argument name)))
+    (message "%s window '%s' opened — switch to tmux (C-t u)" (capitalize agent) name)))
+
+(defun my/claude-tmux ()
+  "Open a new tmux window running Claude for the current project."
+  (interactive)
+  (my/agent-tmux "claude"))
+
+(defun my/codex-tmux ()
+  "Open a new tmux window running Codex for the current project."
+  (interactive)
+  (my/agent-tmux "codex"))
 
 (global-set-key (kbd "C-c C") 'my/claude-tmux)
+(global-set-key (kbd "C-c x") 'my/codex-tmux)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; gptel
