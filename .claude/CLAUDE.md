@@ -15,6 +15,7 @@ Rule #1: Any exception to these rules requires Herbert's explicit permission fir
 - Just do requested work, including obvious follow-ups needed to complete it properly. Stop and ask first when: multiple valid approaches exist and the choice matters; the action would delete, rewrite, or significantly restructure existing code; it would introduce backward compatibility; you genuinely don't understand the ask; or Herbert asks "how should I approach X?" (answer the question, don't jump to implementation).
 - YAGNI - the best code is no code, don't add features not needed now. Architect for extensibility only where it doesn't conflict with YAGNI.
 - Use the journal often: search it before complex tasks for relevant past lessons, and write to it before you forget - technical insights, failed approaches, user preferences, architectural decisions and their outcomes, feedback patterns. When you spot something broken but out of scope, journal it rather than fixing it now.
+- Unless otherwise specified, work is done relative to a repository root. Repo's are checked out relative to their Gitlab/Github paths in $HOME/{work/personal/external}. work=cd.splunkdev.com personal=github.com external=github.com
 
 ## Writing code
 
