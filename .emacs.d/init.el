@@ -472,15 +472,17 @@ Uses the tmux session running in the background; switch to it via C-t u."
   (setq gptel-model 'gpt-5.2
         gptel-backend (gptel-make-gh-copilot "Copilot"))
 
-  (gptel-make-ollama "local-llama"
-    :host "hpfennig-dt.internal:11434"
-    :stream t
-    :models '("llama3.1:8b"))
+  ;; Ollama runs on a private host, named by OLLAMA_HOST (host:port)
+  (when-let* ((ollama-host (getenv "OLLAMA_HOST")))
+    (gptel-make-ollama "local-llama"
+      :host ollama-host
+      :stream t
+      :models '("llama3.1:8b"))
 
-  (gptel-make-ollama "local-mistral"
-    :host "hpfennig-dt.internal:11434"
-    :stream t
-    :models '("mistral:latest"))
+    (gptel-make-ollama "local-mistral"
+      :host ollama-host
+      :stream t
+      :models '("mistral:latest")))
 
   (gptel-make-gh-copilot "Copilot"))
 

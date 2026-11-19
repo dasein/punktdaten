@@ -8,20 +8,20 @@ cd "$root" || exit
 
 git submodule update --init
 
-# Link a single item from the repo into a target directory.
-# Replaces existing symlinks. Refuses to touch real files/dirs.
+# Link a single item from the repo into a target directory, optionally
+# under a different name. Replaces existing symlinks. Refuses to touch
+# real files/dirs.
 link_into() {
     local target_dir="$1"
     local src="$2"
-    local name
-    name=$(basename "$src")
+    local name="${3:-$(basename "$src")}"
     local dest="$target_dir/$name"
 
     if [ -e "$dest" ] && [ ! -h "$dest" ]; then
         echo "ERROR: $dest is real and exists, skipping"
         return
     fi
-    ln -fs "$src" "$target_dir"
+    ln -fns "$src" "$dest"
     echo "Linked: $dest"
 }
 
@@ -53,25 +53,13 @@ for b in $binfiles; do
     fi
 done
 
-# ~/.claude — link individual tracked files; never touch settings.local.json
-mkdir -p "$HOME/.claude/commands" "$HOME/.claude/skills"
-for f in "$root/.claude/"*; do
-    name=$(basename "$f")
-    [ "$name" = "commands" ] && continue
-    [ "$name" = "skills" ] && continue
-    link_into "$HOME/.claude" "$f"
-done
-for f in "$root/.claude/commands/"*; do
-    link_into "$HOME/.claude/commands" "$f"
-done
+# Agents — Claude and Codex share one set of instructions and skills.
+# Settings files (settings.json, config.toml) stay local: the agents write
+# machine-specific state such as trusted project paths into them.
+mkdir -p "$HOME/.claude/skills" "$HOME/.codex/skills"
+link_into "$HOME/.claude" "$root/.claude/CLAUDE.md"
+link_into "$HOME/.codex" "$root/.claude/CLAUDE.md" AGENTS.md
 for f in "$root/.claude/skills/"*; do
     link_into "$HOME/.claude/skills" "$f"
-done
-
-# ~/.codex — link config.toml; share commands and skills from ~/.claude
-# prompts -> ~/.claude/commands is already a symlink created by codex; leave it
-mkdir -p "$HOME/.codex/skills"
-link_into "$HOME/.codex" "$root/.codex/config.toml"
-for f in "$root/.claude/skills/"*; do
     link_into "$HOME/.codex/skills" "$f"
 done

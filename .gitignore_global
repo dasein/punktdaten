@@ -39,4 +39,3 @@ nosetests.xml
 
 **/.claude/settings.local.json
 .codex/auth.json
-.codex/config.toml.local

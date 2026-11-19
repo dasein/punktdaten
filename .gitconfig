@@ -28,7 +28,7 @@
         editor = emacs -nw --no-init-file --no-site-file --load ~/.emacs.git
         whitespace=fix,-indent-with-non-tab,trailing-space,cr-at-eol
         excludesfile = ~/.gitignore_global
-        hooksPath = /Users/hpfennig/.git_template/hooks/
+        hooksPath = ~/.git_template/hooks/
 
 [alias]
         s = status -sb

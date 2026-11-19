@@ -1,11 +1,13 @@
 ---
 name: git-workflow
-description: Use when committing code, creating branches, opening PRs/MRs, syncing with upstream, or finishing work in a git repository. Covers the full lifecycle of working in git — from starting new work (pool branches or worktrees) to committing, rebasing, publishing (PR/MR), and cleanup. Use this skill whenever the user says "commit", "open pr", "open mr", "create mr", "push", "sync", "rebase", "new branch", "start work on", "finish up", or asks to publish their changes. Also use when the user invokes /commit or /gl.commit.
+description: Use when committing, creating branches, opening PRs/MRs, syncing/rebasing with upstream, pushing, or finishing work in a git repo, including /commit and /gl.commit.
 ---
 
 # Git Workflow
 
 Herbert's git workflow always aims for a clean, single-commit branch ready for PR/MR. The only branching decision is how to get a branch to work on — reuse a pool branch, spin up a worktree, or continue where you already are. Everything after that — committing, rebasing, publishing — is the same.
+
+Triggers: "commit", "open pr", "open mr", "create mr", "push", "sync", "rebase", "new branch", "start work on", "finish up", or any request to publish changes.
 
 ## Step 1: Get a Branch to Work On
 
@@ -88,7 +90,7 @@ When amending, write the message describing the FULL commit content (diff agains
 
 ### Commit message format
 
-Present tense, imperative mood. No signatures, no "Co-Authored-By", no "Generated with Claude Code".
+Present tense, imperative mood. No signatures, no "Co-Authored-By", no "Generated with Claude Code", no session links.
 
 **Subject line:**
 
@@ -126,12 +128,7 @@ git fetch origin
 git rebase origin/main
 ```
 
-The branch should end up with exactly one commit ahead of origin/main. If multiple local commits exist and weren't explicitly requested, squash them:
-
-```bash
-git rebase -i origin/main
-# squash all commits into the first
-```
+The branch should end up with exactly one commit ahead of origin/main. If multiple local commits exist and weren't explicitly requested, squash them (non-interactively, e.g. `git reset --soft origin/main` then a single commit with the full message).
 
 ## Step 4: Open a PR/MR
 
