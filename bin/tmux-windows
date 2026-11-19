@@ -3,6 +3,10 @@
 # --status mode: print tmux status bar dot summary instead of launching picker.
 set -uo pipefail
 
+# tmux replaces non-ASCII with "_" when the client isn't UTF-8, which would
+# hide agent glyphs from the pane titles and screen text read below.
+export LC_ALL=en_US.UTF-8
+
 SELF=$(realpath "$0")
 
 DAEMON_PID_OPTION="@tmux_windows_daemon_pid"
@@ -101,7 +105,6 @@ detect_claude_state() {
   title=$(tmux display-message -pt "$pane_id" '#{pane_title}')
   recent=$(tmux capture-pane -pJ -t "$pane_id" -S -25 2>/dev/null)
 
-  local LC_ALL=C
   if title_has_spinner "$title"; then
     printf 'working'; return
   fi
