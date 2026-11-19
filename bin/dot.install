@@ -25,6 +25,19 @@ link_into() {
     echo "Linked: $dest"
 }
 
+# Remove symlinks in a directory that point at repo files that no longer
+# exist.
+prune_links() {
+    local dir="$1"
+    local link
+    for link in "$dir"/* "$dir"/.*; do
+        if [ -h "$link" ] && [ ! -e "$link" ] && [[ "$(readlink "$link")" == "$root"/* ]]; then
+            rm "$link"
+            echo "Removed: $link"
+        fi
+    done
+}
+
 # Top-level dotfiles — exclude dirs managed file-by-file below
 dotfiles=$(find . -mindepth 1 -maxdepth 1 -iname ".*" \
     ! -name .git \
@@ -62,4 +75,9 @@ link_into "$HOME/.codex" "$root/.claude/CLAUDE.md" AGENTS.md
 for f in "$root/.claude/skills/"*; do
     link_into "$HOME/.claude/skills" "$f"
     link_into "$HOME/.codex/skills" "$f"
+done
+
+for d in "$HOME" "$HOME/bin" "$HOME/.claude" "$HOME/.claude/commands" \
+    "$HOME/.claude/skills" "$HOME/.codex" "$HOME/.codex/skills"; do
+    prune_links "$d"
 done

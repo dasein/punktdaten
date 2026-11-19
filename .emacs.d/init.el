@@ -437,15 +437,17 @@
   "Open a new tmux window running AGENT (\"claude\" or \"codex\") for the current project.
 Uses the tmux session running in the background; switch to it via C-t u."
   (let* ((root (expand-file-name (or (projectile-project-root) default-directory)))
-         (base (file-name-nondirectory (directory-file-name root)))
+         (base (format "%s:%s" (substring agent 0 2)
+                       (file-name-nondirectory (directory-file-name root))))
          (existing (split-string (shell-command-to-string "tmux list-windows -F '#{window_name}'" ) "\n" t))
          (name (if (member base existing)
                    (let ((suffix (read-string (format "Window '%s' exists. Suffix (blank for default): " base))))
                      (if (string-empty-p suffix) base (format "%s:%s" base suffix)))
                  base)))
-    (shell-command
-     (format "launch-agent.sh %s %s %s" agent (shell-quote-argument root) (shell-quote-argument name)))
-    (message "%s window '%s' opened — switch to tmux (C-t u)" (capitalize agent) name)))
+    (if (eq 0 (shell-command
+               (format "launch-agent.sh %s %s %s" agent (shell-quote-argument root) (shell-quote-argument name))))
+        (message "%s window '%s' opened — switch to tmux (C-t u)" (capitalize agent) name)
+      (error "Could not open %s window '%s' — see *Shell Command Output*" (capitalize agent) name))))
 
 (defun my/claude-tmux ()
   "Open a new tmux window running Claude for the current project."
