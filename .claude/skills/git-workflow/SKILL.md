@@ -71,7 +71,7 @@ Default to **one commit per branch**. Only split into multiple commits when Herb
 
 ```bash
 git add <specific-files>
-git commit --no-verify -m "$(cat <<'EOF'
+git commit -m "$(cat <<'EOF'
 <message>
 EOF
 )"
@@ -83,7 +83,7 @@ If a commit already exists on the branch (continuing work, or fixing up the last
 
 ```bash
 git add <specific-files>
-git commit --amend --no-verify
+git commit --amend
 ```
 
 When amending, write the message describing the FULL commit content (diff against parent), not the incremental change.
@@ -157,7 +157,7 @@ This is the common loop when context-switching back into a repo to address comme
 
 ```bash
 git add <specific-files>
-git commit --amend --no-verify
+git commit --amend
 git fetch origin
 git rebase origin/main
 git push --force-with-lease

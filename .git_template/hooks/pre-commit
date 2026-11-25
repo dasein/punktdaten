@@ -45,9 +45,11 @@ set_user_email() {
 set_user_email
 
 # Block commits that stage secrets
-if command -v gitleaks > /dev/null; then
-    gitleaks git --staged --no-banner --redact || exit 1
+if ! command -v gitleaks > /dev/null; then
+    echo "[pre-commit hook] gitleaks is not installed, cannot scan for secrets"
+    exit 1
 fi
+gitleaks git --staged --no-banner --redact || exit 1
 
 # Extra checks for the un-initiated.
 # Uncomment when publishing for system wide config checks

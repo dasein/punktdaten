@@ -67,17 +67,18 @@ for b in $binfiles; do
 done
 
 # Agents — Claude and Codex share one set of instructions and skills.
+# Codex reads personal skills from ~/.agents/skills.
 # Settings files (settings.json, config.toml) stay local: the agents write
 # machine-specific state such as trusted project paths into them.
-mkdir -p "$HOME/.claude/skills" "$HOME/.codex/skills"
+mkdir -p "$HOME/.claude/skills" "$HOME/.agents/skills"
 link_into "$HOME/.claude" "$root/.claude/CLAUDE.md"
 link_into "$HOME/.codex" "$root/.claude/CLAUDE.md" AGENTS.md
 for f in "$root/.claude/skills/"*; do
     link_into "$HOME/.claude/skills" "$f"
-    link_into "$HOME/.codex/skills" "$f"
+    link_into "$HOME/.agents/skills" "$f"
 done
 
 for d in "$HOME" "$HOME/bin" "$HOME/.claude" "$HOME/.claude/commands" \
-    "$HOME/.claude/skills" "$HOME/.codex" "$HOME/.codex/skills"; do
+    "$HOME/.claude/skills" "$HOME/.codex" "$HOME/.agents/skills"; do
     prune_links "$d"
 done

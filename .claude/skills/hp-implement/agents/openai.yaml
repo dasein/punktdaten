@@ -1,0 +1,3 @@
+# Codex: run this skill only when it is invoked by name ($hp-implement)
+policy:
+  allow_implicit_invocation: false

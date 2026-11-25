@@ -36,6 +36,8 @@ nosetests.xml
 
 # AI
 .aider*
+Claude outputs/
+cowork-skill-uploads/
 
 **/.claude/settings.local.json
 .codex/auth.json
